@@ -17,6 +17,6 @@
     "entry": "index.cjs"
   },
   "media": {
-    "dir": "assets"
+    "dir": "public/assets"
   }
 }
