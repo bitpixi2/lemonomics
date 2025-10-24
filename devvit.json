@@ -1,8 +1,8 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
-  "name": "<% name %>",
+  "name": "bitpixis-bar",
   "post": {
-    "dir": "dist/client",
+    "dir": "apps/client/dist",
     "entrypoints": {
       "default": {
         "entry": "index.html"
@@ -10,7 +10,7 @@
     }
   },
   "server": {
-    "dir": "dist/server",
+    "dir": "apps/devvit/dist",
     "entry": "index.cjs"
   },
   "media": {
@@ -20,7 +20,7 @@
     "items": [
       {
         "label": "Create a new post",
-        "description": "<% name %>",
+        "description": "bitpixis-bar",
         "location": "subreddit",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/post-create"

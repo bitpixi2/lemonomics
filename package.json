@@ -1,26 +1,27 @@
 {
   "private": true,
-  "name": "devvit-threejs-starter-experimental",
+  "name": "bitpixis-bar",
   "version": "0.0.0",
   "license": "BSD-3-Clause",
   "type": "module",
   "scripts": {
-    "postinstall": "npm run build",
-    "build:client": "cd src/client && vite build",
-    "build:server": "cd src/server && vite build",
-    "build": "npm run build:client && npm run build:server",
-    "check": "npm run type-check && npm run lint:fix && npm run prettier",
-    "deploy": "npm run build && devvit upload",
-    "dev": "concurrently -k -p \"[{name}]\" -n \"CLIENT,SERVER,DEVVIT\" -c \"blue,green,magenta\" \"npm run dev:client\" \"npm run dev:server\" \"npm run dev:devvit\"",
-    "dev:client": "cd src/client && vite build --watch",
+    "postinstall": "pnpm run build",
+    "build:client": "pnpm --filter @bitpixis-bar/client build",
+    "build:server": "pnpm --filter @bitpixis-bar/devvit build",
+    "build": "pnpm run build:client && pnpm run build:server",
+    "check": "pnpm run type-check && pnpm run lint:fix && pnpm run prettier",
+    "deploy": "pnpm run build && devvit upload",
+    "dev": "concurrently -k -p \"[{name}]\" -n \"CLIENT,SERVER,DEVVIT\" -c \"blue,green,magenta\" \"pnpm run dev:client\" \"pnpm run dev:server\" \"pnpm run dev:devvit\"",
+    "dev:client": "pnpm --filter @bitpixis-bar/client dev",
     "dev:devvit": "dotenv -e .env -- devvit playtest",
-    "dev:server": "cd src/server && vite build --watch",
-    "lint": "eslint ./src",
-    "lint:fix": "eslint --fix ./src",
+    "dev:server": "pnpm --filter @bitpixis-bar/devvit dev",
+    "lint": "eslint ./apps ./packages",
+    "lint:fix": "eslint --fix ./apps ./packages",
     "login": "devvit login",
-    "launch": "npm run build && npm run deploy && devvit publish",
+    "launch": "pnpm run build && pnpm run deploy && devvit publish",
     "prettier": "prettier-package-json --write ./package.json && prettier --write .",
-    "type-check": "tsc --build"
+    "test": "pnpm --filter \"@bitpixis-bar/*\" test:run",
+    "type-check": "pnpm --filter \"@bitpixis-bar/*\" type-check"
   },
   "dependencies": {
     "@devvit/web": "0.12.0",
@@ -31,6 +32,7 @@
   "devDependencies": {
     "@eslint/js": "9.23.0",
     "@types/express": "5.0.1",
+    "@types/node": "^20.19.21",
     "@types/three": "0.137.0",
     "concurrently": "9.1.2",
     "dotenv-cli": "8.0.0",
@@ -41,6 +43,7 @@
     "typescript": "5.8.2",
     "typescript-eslint": "8.29.0",
     "vite": "6.2.4",
-    "vitest": "3.1.1"
+    "vitest": "3.1.1",
+    "yaml": "^2.8.1"
   }
 }

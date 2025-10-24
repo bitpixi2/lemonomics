@@ -1,0 +1,7 @@
+This folder contains the game assets.
+
+To add your pixel art images:
+1. Save your lemon icon as "lemon-icon.png" 
+2. Save your banner as "lemonomics-banner.png"
+
+The HTML splash page will automatically use these images once they're added.

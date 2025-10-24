@@ -1,0 +1,18 @@
+{
+  "extends": "../../../../tools/tsconfig-base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "../../dist/server",
+    "module": "CommonJS",
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
+  },
+  "include": ["**/*"],
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    { "path": "../shared" }
+  ]
+}

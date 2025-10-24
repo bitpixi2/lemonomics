@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Lemonomics - The Most Addictive Lemonade Stand</title>
+  <!-- Favicon removed due to loading issues -->
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Courier New', monospace;
+      background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: crisp-edges;
+    }
+
+    .splash-screen {
+      text-align: center;
+      background: white;
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      max-width: 500px;
+      width: 90%;
+      border: 4px solid #333;
+    }
+
+    .banner-image {
+      width: 100%;
+      max-width: 400px;
+      height: auto;
+      margin-bottom: 1rem;
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: crisp-edges;
+    }
+
+    .title {
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: #2E8B57;
+      margin-bottom: 0.5rem;
+      text-shadow: 2px 2px 0px #FFD700;
+      font-family: 'Courier New', monospace;
+    }
+
+    .subtitle {
+      color: #FF6B35;
+      margin-bottom: 2rem;
+      line-height: 1.4;
+      font-size: 1.1rem;
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
+    }
+
+    .play-button {
+      background: linear-gradient(45deg, #32CD32, #228B22);
+      color: white;
+      border: 3px solid #333;
+      padding: 1rem 2rem;
+      font-size: 1.3rem;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      width: 100%;
+      font-family: 'Courier New', monospace;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .play-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(50, 205, 50, 0.4);
+      background: linear-gradient(45deg, #3CB371, #2E8B57);
+    }
+
+    .play-button:active {
+      transform: translateY(-1px);
+    }
+
+    .features {
+      margin-top: 1.5rem;
+      text-align: left;
+    }
+
+    .feature {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      color: #555;
+      font-family: 'Courier New', monospace;
+    }
+
+    .feature-icon {
+      margin-right: 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    .game-container {
+      display: none;
+      width: 100vw;
+      height: 100vh;
+      background: #87CEEB;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-size: 1.2rem;
+      color: #333;
+      font-family: 'Courier New', monospace;
+    }
+
+    .pixel-art {
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: crisp-edges;
+    }
+
+    .banner-text {
+      font-family: 'Courier New', monospace;
+      font-size: 0.8rem;
+      line-height: 1;
+      color: #333;
+      background: #FFD700;
+      padding: 1rem;
+      border: 3px solid #333;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      white-space: pre;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="splash" class="splash-screen">
+    <!-- ASCII Art Banner -->
+    <div class="banner-text">🍋🍋🍋 LEMONOMICS 🍋🍋🍋
+      The Ultimate Lemonade Stand
+      Business Simulator</div>
+
+    <h1 class="title">Welcome to Lemonomics!</h1>
+    <p class="subtitle">The Most Addictive Lemonade Stand</p>
+
+    <div class="features">
+      <div class="feature">
+        <span class="feature-icon">⭐</span>
+        <span>Use your Reddit karma as business stats</span>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">🌤️</span>
+        <span>Dynamic weather and market events</span>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">🏆</span>
+        <span>Daily and weekly leaderboards</span>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">🎭</span>
+        <span>Seasonal festivals with unique themes</span>
+      </div>
+    </div>
+
+    <button class="play-button" id="start-button">
+      🍋 Clock into Work
+    </button>
+  </div>
+
+  <div id="game" class="game-container">
+    <div class="loading">
+      🍋 Loading your lemonade stand...
+    </div>
+  </div>
+
+  <script type="module" src="main.tsx"></script>
+</body>
+
+</html>

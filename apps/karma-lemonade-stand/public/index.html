@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lemonomics - The Most Addictive Lemonade Stand</title>
+    <link rel="icon" type="image/png" href="assets/lemon-icon.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+        
+        .game-container {
+            width: 100vw;
+            height: 100vh;
+            background: #87CEEB;
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-size: 1.2rem;
+            color: #333;
+            font-family: 'Courier New', monospace;
+        }
+
+        .pixel-art {
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+    </style>
+</head>
+<body>
+    <div id="game" class="game-container" style="display: block;">
+        <div class="loading">
+            🍋 Loading your lemonade stand...
+        </div>
+    </div>
+    
+    <script>
+        // Auto-start the game immediately when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the game immediately
+            import('./main.ts').then(module => {
+                module.initGame();
+            }).catch(error => {
+                console.error('Failed to load game:', error);
+                document.getElementById('game').innerHTML = `
+                    <div class="loading">
+                        ❌ Failed to load game. Please refresh and try again.
+                    </div>
+                `;
+            });
+        });
+    </script>
+</body>
+</html>

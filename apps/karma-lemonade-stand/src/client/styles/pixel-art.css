@@ -1,0 +1,65 @@
+/* Pixel Art Styling for Lemonomics */
+
+.pixel-art {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+}
+
+/* Lemon icon styling */
+.lemon-icon {
+    width: 64px;
+    height: 64px;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+}
+
+/* Banner styling */
+.lemonomics-banner {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    border: 2px solid #333;
+    border-radius: 8px;
+}
+
+/* Pixel perfect scaling */
+@media (min-width: 768px) {
+    .lemonomics-banner {
+        max-width: 500px;
+    }
+}
+
+/* Retro game styling */
+.retro-text {
+    font-family: 'Courier New', monospace;
+    text-shadow: 2px 2px 0px #000;
+    color: #FFD700;
+}
+
+.pixel-button {
+    font-family: 'Courier New', monospace;
+    border: 3px solid #333;
+    background: linear-gradient(45deg, #32CD32, #228B22);
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pixel-button:hover {
+    background: linear-gradient(45deg, #3CB371, #2E8B57);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.pixel-button:active {
+    transform: translateY(0px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}

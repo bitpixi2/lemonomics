@@ -1,0 +1,21 @@
+{
+  "name": "@bitpixis-bar/client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@bitpixis-bar/types": "workspace:*",
+    "@bitpixis-bar/logic": "workspace:*",
+    "three": "0.178.0"
+  },
+  "devDependencies": {
+    "@types/three": "0.137.0",
+    "typescript": "5.8.2",
+    "vite": "6.2.4"
+  }
+}

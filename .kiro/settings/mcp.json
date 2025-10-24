@@ -2,7 +2,27 @@
   "mcpServers": {
     "devvit-mcp": {
       "command": "npx",
-      "args": ["-y", "@devvit/mcp"]
+      "args": [
+        "-y",
+        "@devvit/mcp"
+      ],
+      "disabled": false,
+      "disabledTools": []
+    },
+    "reddit-mcp": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "reddit-mcp-server==0.1.0",
+        "reddit-mcp-server"
+      ],
+      "env": {
+        "FASTMCP_LOG_LEVEL": "ERROR",
+        "PATH": "/Users/kaseyjean/.local/bin:/Users/kaseyjean/.nvm/versions/node/v22.20.0/bin:/usr/local/bin:/usr/bin:/bin",
+        "REDDIT_USER_AGENT": "KarmaLemonadeStand/1.0 by u/bitpixi"
+      },
+      "disabled": true,
+      "autoApprove": []
     }
   }
 }

@@ -1,10 +1,24 @@
 {
-  // Only build references.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "allowJs": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  },
   "files": [],
   "references": [
-    { "path": "./src/devvit" },
-    { "path": "./src/client" },
-    { "path": "./src/shared" },
-    { "path": "./src/server" }
+    { "path": "./apps/client" },
+    { "path": "./apps/devvit" },
+    { "path": "./packages/types" },
+    { "path": "./packages/logic" },
+    { "path": "./packages/redis" }
   ]
 }
