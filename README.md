@@ -27,6 +27,21 @@
 🥇 Awards        → ✨ Special Bonuses
 ```
 
+## 📚 About & Gaming History
+
+**Lemonomics** is inspired by the classic **Lemonade Stand** game, originally created by **Bob Jamison** for mainframe computers in **1973**. This pioneering business simulation was later adapted and modified by **Charlie Kellner** for the Apple II computer in **1979**, becoming one of the most beloved and influential early computer games.
+
+🔗 **Historical Reference**: [View the original Apple BASIC source code](https://gist.github.com/badvision/16b74ade3a8b2fa2e87d)
+
+**From 1973 to 2025** - We've brought this timeless concept into the modern era with:
+- 🌐 **Reddit Integration** - Your community participation matters
+- 🏆 **Multiplayer Competition** - Compete with players worldwide  
+- 🎪 **Dynamic Content** - 30+ festivals and daily events
+- 📱 **Modern Technology** - Mobile-optimized React interface
+- 🔒 **Fair Play** - Advanced anti-cheat and security systems
+
+The entrepreneurial spirit of running a lemonade stand lives on! 🍋
+
 ## 🎯 How to Play
 
 ### 🚀 Getting Started

@@ -14,6 +14,21 @@
 
 **Lemonomics** is a Reddit-integrated business simulation game where players run virtual lemonade stands. The game transforms Reddit user statistics (karma, account age, awards) into business capabilities, creating a unique gaming experience that rewards Reddit community participation.
 
+## 📚 About & History
+
+This modern Reddit game is inspired by the classic **Lemonade Stand** game originally created by **Bob Jamison** for mainframe computers in **1973**. The concept was later adapted and modified by **Charlie Kellner** for the Apple II computer in **1979**, becoming one of the most beloved early computer games.
+
+🔗 **Historical Reference**: You can view the original Apple BASIC source code [here](https://gist.github.com/badvision/16b74ade3a8b2fa2e87d)
+
+**Lemonomics** honors this gaming legacy while bringing the lemonade stand experience into the modern era with:
+- Reddit community integration
+- Real-time multiplayer competition  
+- Advanced game mechanics and festivals
+- Social features and leaderboards
+- Mobile-optimized gameplay
+
+From 1973 mainframes to 2025 Reddit - the entrepreneurial spirit of running a lemonade stand continues! 🍋
+
 ```
 🎯 CORE GAMEPLAY LOOP
 ┌─────────────────────────────────────┐

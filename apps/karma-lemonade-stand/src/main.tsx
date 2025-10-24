@@ -40,7 +40,13 @@ Devvit.addCustomPostType({
     }
 
     return (
-      <vstack height="100%" width="100%" alignment="center middle" gap="medium" padding="large">
+      <vstack
+        height="100%"
+        width="100%"
+        alignment="center middle"
+        gap="medium"
+        padding="large"
+      >
         {/* Background banner image */}
         <image
           url="lemonomics-banner.png"
@@ -49,7 +55,7 @@ Devvit.addCustomPostType({
           height="120px"
           resizeMode="cover"
         />
-        
+
         <hstack gap="medium" alignment="center middle">
           {/* Lemon icon */}
           <image
@@ -58,7 +64,7 @@ Devvit.addCustomPostType({
             width="48px"
             height="48px"
           />
-          
+
           <vstack gap="small" alignment="center">
             <text size="xxlarge" weight="bold" color="yellow">
               LEMONOMICS
@@ -67,7 +73,7 @@ Devvit.addCustomPostType({
               Turn your Reddit karma into lemonade profits!
             </text>
           </vstack>
-          
+
           <image
             url="lemon-icon.png"
             description="Lemon Stand Icon"
@@ -75,7 +81,7 @@ Devvit.addCustomPostType({
             height="48px"
           />
         </hstack>
-        
+
         <vstack gap="small" alignment="center">
           <text size="medium" color="secondary">
             Welcome, {userStats.data?.username || 'Player'}!
@@ -86,10 +92,18 @@ Devvit.addCustomPostType({
         </vstack>
 
         <vstack gap="small" alignment="center">
-          <text size="small" color="secondary">🎪 Daily festivals & events</text>
-          <text size="small" color="secondary">🏆 Competitive leaderboards</text>
-          <text size="small" color="secondary">🎁 Daily login bonuses</text>
-          <text size="small" color="secondary">💎 Power-ups & upgrades</text>
+          <text size="small" color="secondary">
+            🎪 Daily festivals & events
+          </text>
+          <text size="small" color="secondary">
+            🏆 Competitive leaderboards
+          </text>
+          <text size="small" color="secondary">
+            🎁 Daily login bonuses
+          </text>
+          <text size="small" color="secondary">
+            💎 Power-ups & upgrades
+          </text>
         </vstack>
 
         <button
@@ -99,7 +113,7 @@ Devvit.addCustomPostType({
         >
           🍋 Start Your Lemonade Stand! 🍋
         </button>
-        
+
         <text size="small" color="secondary" alignment="center">
           Build your empire, one cup at a time!
         </text>
@@ -121,10 +135,17 @@ Devvit.addMenuItem({
 
       // Create a custom post using our post type
       await reddit.submitPost({
-        title: '🍋 Welcome to Lemonomics! Turn your karma into lemonade profits! 🍋',
+        title:
+          '🍋 Welcome to Lemonomics! Turn your karma into lemonade profits! 🍋',
         subredditName: subreddit.name,
         preview: (
-          <vstack height="100%" width="100%" alignment="center middle" gap="medium" padding="large">
+          <vstack
+            height="100%"
+            width="100%"
+            alignment="center middle"
+            gap="medium"
+            padding="large"
+          >
             <image
               url="lemonomics-banner.png"
               description="Lemonomics Game Banner"
@@ -132,7 +153,7 @@ Devvit.addMenuItem({
               height="120px"
               resizeMode="cover"
             />
-            
+
             <hstack gap="medium" alignment="center middle">
               <image
                 url="lemon-icon.png"
@@ -140,7 +161,7 @@ Devvit.addMenuItem({
                 width="48px"
                 height="48px"
               />
-              
+
               <vstack gap="small" alignment="center">
                 <text size="xxlarge" weight="bold" color="yellow">
                   LEMONOMICS
@@ -149,7 +170,7 @@ Devvit.addMenuItem({
                   The most addictive lemonade stand game on Reddit!
                 </text>
               </vstack>
-              
+
               <image
                 url="lemon-icon.png"
                 description="Lemon Stand Icon"
@@ -157,7 +178,7 @@ Devvit.addMenuItem({
                 height="48px"
               />
             </hstack>
-            
+
             <button appearance="primary" size="large">
               🍋 Play Now! 🍋
             </button>
@@ -184,13 +205,14 @@ Devvit.addTrigger({
   event: 'AppInstall',
   onEvent: async (_event, context) => {
     const { reddit } = context;
-    
+
     try {
       const subreddit = await reddit.getCurrentSubreddit();
-      
+
       // Create welcome post on installation
       await reddit.submitPost({
-        title: '🍋 Lemonomics is now installed! Welcome to the lemonade business! 🍋',
+        title:
+          '🍋 Lemonomics is now installed! Welcome to the lemonade business! 🍋',
         text: 'Your community can now play the most addictive lemonade stand game! Moderators can create game posts using the subreddit menu.',
         subredditName: subreddit.name,
       });
