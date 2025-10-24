@@ -1,141 +1,208 @@
-## Devvit Three.js Starter
+# 🍋 Lemonomics - The Ultimate Reddit Lemonade Stand Game 🍋
 
-A starter to build web applications on Reddit's developer platform
-
-- [Devvit](https://developers.reddit.com/): A way to build and deploy immersive games on Reddit
-- [Vite](https://vite.dev/): For compiling the webView
-- [Three.js](https://threejs.org/): For 3D animations and physics
-- [Express](https://expressjs.com/): For backend logic
-- [Typescript](https://www.typescriptlang.org/): For type safety
-
-## Getting Started
-
-> Make sure you have Node 22 downloaded on your machine before running!
-
-1. Run `npm create devvit@latest --template=threejs`
-2. Go through the installation wizard. You will need to create a Reddit account and connect it to Reddit developers
-3. Copy the command on the success page into your terminal
-
-## Commands
-
-- `npm run dev`: Starts a development server where you can develop your application live on Reddit.
-- `npm run build`: Builds your client and server projects
-- `npm run deploy`: Uploads a new version of your app
-- `npm run launch`: Publishes your app for review
-- `npm run login`: Logs your CLI into Reddit
-- `npm run check`: Type checks, lints, and prettifies your app
-
-## Cursor Integration
-
-This template comes with a pre-configured cursor environment. To get started, [download cursor](https://www.cursor.com/downloads) and enable the `devvit-mcp` when prompted.
-
-## Kiro Spec-Driven Workflow
-
-This project showcases Kiro's spec-driven development methodology, where YAML specifications automatically generate TypeScript types, validators, and business logic.
-
-### How Specs → Hooks → Codegen Works
-
-```mermaid
-graph TD
-    A[YAML Specs] --> B[Kiro Hooks]
-    B --> C[Generated Code]
-    C --> D[Application]
-    
-    A1[drink.yaml] --> B1[gen-types.ts]
-    A2[shop.yaml] --> B1
-    B1 --> C1[TypeScript Types]
-    B1 --> C2[JSON Schemas]
-    
-    A1 --> B2[gen-logic.ts]
-    A2 --> B2
-    B2 --> C3[Business Logic]
-    B2 --> C4[Validators]
-    
-    A1 --> B3[validate-drink.ts]
-    B3 --> C5[Real-time Validation]
-    
-    C1 --> D1[Client App]
-    C2 --> D1
-    C3 --> D1
-    C4 --> D2[Devvit Posts]
-    C5 --> D2
+```
+                    🍋 LEMONOMICS 🍋
+                  ╔══════════════════╗
+                  ║  🏪 LEMONADE 🏪  ║
+                  ║     STAND        ║
+                  ╚══════════════════╝
+                         🍋🥤🍋
+                    
+    ┌─────────────────────────────────────┐
+    │  Turn Your Reddit Karma Into Cash!  │
+    │     🎯 Strategy • 🎲 Luck • 💰 Profit │
+    └─────────────────────────────────────┘
 ```
 
-### Development Process
+## 🎮 What is Lemonomics?
 
-1. **Requirements** - Define user stories with EARS format acceptance criteria
-2. **Design** - Create comprehensive architecture from requirements  
-3. **Specifications** - Write YAML specs that capture the design
-4. **Code Generation** - Hooks automatically generate implementation code
-5. **Implementation** - Build features using generated types and logic
+**Lemonomics** is the most addictive business simulation game on Reddit! Transform your Reddit karma, account age, and awards into real business advantages as you run your very own virtual lemonade stand. Every upvote you've earned, every day you've been on Reddit, and every award you've received directly impacts your success in the game!
 
-### Key Files
+```
+🍋 Your Reddit Stats = Your Business Power! 🍋
 
-#### Specifications
-- `.kiro/specs/drink.yaml` - Drink recipe schema and validation rules
-- `.kiro/specs/shop.yaml` - Voting system and player progression
-- `.kiro/steering.yaml` - Development conventions and guidelines
+📈 Comment Karma → 🛎️  Customer Service Level
+🏆 Post Karma    → 📢 Marketing Expertise  
+⏰ Account Age   → 🤝 Business Reputation
+🥇 Awards        → ✨ Special Bonuses
+```
 
-#### Generated Code (DO NOT EDIT)
-- `packages/types/src/gen/types.ts` - TypeScript interfaces
-- `packages/types/src/gen/schemas.ts` - JSON Schema definitions
-- `packages/logic/src/gen/validators.ts` - Validation functions
-- `packages/logic/src/gen/color-mixing.ts` - Color blending logic
-- `packages/logic/src/gen/drink-formatting.ts` - Reddit post formatting
+## 🎯 How to Play
 
-#### Hooks (Automation)
-- `.kiro/hooks/gen-types.ts` - Generate types from specs
-- `.kiro/hooks/gen-logic.ts` - Generate business logic
-- `.kiro/hooks/validate-drink.ts` - Real-time validation
+### 🚀 Getting Started
+1. **Find a Lemonomics post** on participating subreddits
+2. **Click "Play Game"** to open your lemonade stand
+3. **Make daily decisions** about pricing and advertising
+4. **Watch your profits grow** based on your Reddit reputation!
 
-### Running the Demo
+### 🎲 Daily Gameplay
+Every day brings new challenges and opportunities:
 
-1. **Edit a specification:**
-   ```bash
-   # Add a new backdrop to drink.yaml
-   vim .kiro/specs/drink.yaml
-   ```
+```
+☀️ WEATHER SYSTEM ☀️
+🌞 Sunny Days    → More customers!
+🌧️ Rainy Days   → Fewer customers
+🔥 Hot Weather   → Lemonade rush!
+❄️ Cold Weather  → Slow sales
+```
 
-2. **Regenerate code:**
-   ```bash
-   npx tsx .kiro/hooks/gen-types.ts
-   npx tsx .kiro/hooks/gen-logic.ts
-   ```
+```
+📰 MARKET EVENTS 📰
+🚀 Viral Moment  → 2x demand boost!
+🍋 Lemon Shortage → Higher costs
+💸 Inflation     → Reduced profits
+📈 Normal Day    → Steady business
+```
 
-3. **See the changes:**
-   ```bash
-   # New types automatically available
-   cat packages/types/src/gen/types.ts
-   ```
+### 🎪 Weekly Festivals
+Experience 30+ themed festivals that transform your game:
 
-4. **Build and test:**
-   ```bash
-   pnpm run build
-   pnpm run test
-   ```
+```
+🎃 HALLOWEEN SPOOKY     🎄 CHRISTMAS WINTER
+💝 VALENTINE HEARTS     🌸 EASTER SPRING  
+🌈 NEON CYBER          🏰 MEDIEVAL TIMES
+🚀 SPACE AGE           🏴‍☠️ PIRATE SEAS
+🧙‍♂️ WIZARD ACADEMY      🤖 ROBOT FACTORY
+```
 
-### Architecture Benefits
+Each festival brings unique visual themes and gameplay bonuses!
 
-- **Type Safety** - Generated types ensure consistency across client/server
-- **Validation** - Single source of truth for validation rules
-- **Maintainability** - Changes to specs automatically update all code
-- **Testing** - Deterministic functions with seeded randomization
-- **Documentation** - Specs serve as living documentation
+## 🏆 Competitive Features
 
-### Game Features
+### 📊 Leaderboards
+- **Daily Rankings** - Compete for today's top spot
+- **Weekly Championships** - Prove your business skills
+- **Pure League** - Fair competition without power-ups
+- **Streak Tracking** - Build your winning momentum
 
-- **Progressive Gameplay** - Zoomed-out bar → drink creation → component design
-- **Community Voting** - Reddit integration with automatic post creation
-- **Custom Components** - Players create glasses, backdrops, flavors, toppings
-- **Three.js Rendering** - Beautiful 3D drink visualization
-- **Multiple Themes** - Girly, spooky Halloween, cyberpunk neon aesthetics
+### 🎁 Daily Login Bonuses
+```
+🌟 PERFECT DAY  → +15% revenue boost
+📢 FREE ADS     → +2 advertising credits  
+🧊 COOLER       → Ignore cold weather penalties
+```
 
-### Tech Stack
+### 💎 Power-Up System
+Struggling? Purchase temporary boosts:
+- **Super Sugar** - +20% demand & +1 service level
+- **Daily limits** ensure fair competition
+- **Separate leaderboards** for pure vs. power-up games
 
-- **Frontend:** Three.js, TypeScript, Vite
-- **Backend:** Devvit Web, Express, Redis
-- **Build:** pnpm monorepo with project references
-- **Testing:** Vitest with ≥85% coverage requirement
-- **CI/CD:** GitHub Actions for type checking and testing
+## 🎨 Game Features
 
-This project demonstrates how spec-driven development can create maintainable, type-safe applications with automated code generation and comprehensive testing.
+```
+🎯 STRATEGIC DEPTH
+├── 🏷️  Pricing Strategy (¢25 - $5.00)
+├── 📢 Advertising Budget ($0 - $50)  
+├── 🌤️  Weather Adaptation
+├── 📈 Market Event Response
+└── 🎪 Festival Optimization
+
+🎲 DYNAMIC CONDITIONS  
+├── ☀️  5 Weather Types
+├── 📰 4 Market Events
+├── 🎪 30+ Festival Themes
+├── 🍋 Daily Ingredient Prices
+└── 🎁 Login Bonus System
+
+📊 PROGRESSION SYSTEM
+├── 🔥 Streak Tracking
+├── 🏆 Personal Best Records
+├── 📈 Progress Milestones
+├── 🎖️  Achievement System
+└── 📊 Detailed Statistics
+```
+
+## 🛠️ Technical Excellence
+
+Built with cutting-edge technology for the best Reddit gaming experience:
+
+- **⚛️ React** - Smooth, responsive interface
+- **🔧 TypeScript** - Rock-solid reliability  
+- **🚀 Devvit Platform** - Native Reddit integration
+- **📱 Mobile-First** - Perfect on any device
+- **🔒 Anti-Cheat** - Fair play guaranteed
+- **💳 Secure Payments** - Safe power-up purchases
+
+## 🎮 For Developers
+
+### 🏗️ Architecture
+```
+📁 Project Structure
+├── 🎨 src/client/     → React game interface
+├── ⚙️  src/server/     → Express.js backend  
+├── 🔗 src/shared/     → Shared types & utils
+├── 🧪 src/tests/      → Comprehensive test suite
+└── 📊 src/monitoring/ → Analytics & health checks
+```
+
+### 🚀 Quick Start
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Run tests
+npm run test
+
+# Deploy to Reddit
+npm run launch
+```
+
+### 🧪 Testing
+- **54 Unit Tests** - Core logic validation
+- **Integration Tests** - API endpoint testing  
+- **E2E Tests** - Complete user flow testing
+- **100% TypeScript** - Type-safe development
+
+## 🌟 Why Lemonomics?
+
+```
+🎯 UNIQUE CONCEPT
+Your Reddit history becomes your competitive advantage!
+
+🎮 ADDICTIVE GAMEPLAY  
+Simple to learn, impossible to master
+
+🏆 FAIR COMPETITION
+Deterministic algorithms ensure skill matters
+
+📱 MOBILE OPTIMIZED
+Perfect experience on any device
+
+🔒 SECURE & SAFE
+Built with Reddit's security standards
+
+🎪 CONSTANTLY EVOLVING
+New festivals and features added regularly
+```
+
+## 🤝 Community
+
+Join the Lemonomics community:
+- **🎮 Play** on participating subreddits
+- **💬 Discuss** strategies and tips
+- **🏆 Compete** in daily/weekly leaderboards
+- **🎉 Celebrate** festival themes together
+
+## 📜 License
+
+This project is licensed under the BSD-3-Clause License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+```
+🍋 Made with ❤️ for the Reddit Community 🍋
+
+         ┌─────────────────────┐
+         │  Ready to squeeze   │
+         │   some profits?     │
+         │                     │
+         │   🍋 PLAY NOW! 🍋   │
+         └─────────────────────┘
+              🥤💰🏆💎🎯
+```
+
+**© 2025 Lemonomics - Turn Your Karma Into Cash!**

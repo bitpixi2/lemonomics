@@ -40,7 +40,7 @@ export class PersonalBestTracker {
       bestProfit: profile.progress.bestProfit || 0,
       totalRuns,
       lastPlayDate: profile.progress.lastPlayDate ?? null,
-      averageProfit: totalRuns > 0 ? Math.round(totalProfit / totalRuns) : 0
+      averageProfit: totalRuns > 0 ? Math.round((totalProfit / totalRuns) * 100) / 100 : 0
     };
   }
   

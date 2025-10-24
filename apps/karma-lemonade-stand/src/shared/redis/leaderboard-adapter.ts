@@ -612,4 +612,3 @@ export class LeaderboardAdapter {
     return rank || 0;
   }
 }
-}

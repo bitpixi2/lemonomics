@@ -1,16 +1,20 @@
 {
+  "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
   "name": "lemonomics-game",
   "version": "1.0.0",
-  "description": "The Most Addictive Lemonade Stand Game",
+  "description": "The Most Addictive Lemonade Stand Game - Turn Your Reddit Karma Into Cash!",
   "author": "u/bitpixi",
-  "main": "src/main.tsx",
   "post": {
-    "dir": "public",
+    "dir": "dist/client",
     "entrypoints": {
       "default": {
         "entry": "index.html"
       }
     }
+  },
+  "server": {
+    "dir": "dist/server",
+    "entry": "index.cjs"
   },
   "media": {
     "dir": "assets"

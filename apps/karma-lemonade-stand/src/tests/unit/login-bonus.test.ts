@@ -233,12 +233,23 @@ describe('Login Bonus System', () => {
     });
 
     it('should prevent claiming bonus twice in same day', async () => {
+      const today = new Date();
+      const todayString = today.toISOString().split('T')[0];
+      const endOfToday = new Date(today);
+      endOfToday.setHours(23, 59, 59, 999);
+      
       mockUserProfileAdapter.getProfile.mockResolvedValue({
         userId: 'test-user',
-        progress: { lastPlayDate: '2024-01-01' }
+        progress: { lastPlayDate: todayString },
+        loginBonus: {
+          type: LoginBonusType.PERFECT,
+          description: 'Perfect Day',
+          effect: '+15% revenue boost',
+          duration: 24,
+          claimed: true,
+          expiresAt: endOfToday.toISOString()
+        }
       });
-
-      vi.spyOn(loginBonusManager, 'canClaimTodaysBonus').mockResolvedValue(false);
 
       const validation = await bonusService.validateBonusClaim('test-user');
       

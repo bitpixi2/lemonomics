@@ -8,6 +8,10 @@ describe('StreakTracker', () => {
   let mockProfile: UserProfile;
 
   beforeEach(() => {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
     mockProfile = {
       userId: 'test-user',
       username: 'testuser',
@@ -28,12 +32,12 @@ describe('StreakTracker', () => {
         currentStreak: 2,
         longestStreak: 3,
         bestProfit: 25.50,
-        lastPlayDate: '2024-01-14', // Yesterday
+        lastPlayDate: yesterday.toISOString().split('T')[0], // Yesterday
         totalProfit: 100.25
       },
       powerups: {
         usedToday: {},
-        lastResetDate: '2024-01-15'
+        lastResetDate: today.toISOString().split('T')[0]
       }
     };
   });
@@ -48,7 +52,9 @@ describe('StreakTracker', () => {
     });
 
     it('should reset streak for missed days', () => {
-      mockProfile.progress.lastPlayDate = '2024-01-10'; // 5 days ago
+      const fiveDaysAgo = new Date();
+      fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+      mockProfile.progress.lastPlayDate = fiveDaysAgo.toISOString().split('T')[0]; // 5 days ago
       
       const result = StreakTracker.updateStreak(mockProfile);
 
@@ -60,6 +66,7 @@ describe('StreakTracker', () => {
     it('should handle first-time players', () => {
       mockProfile.progress.lastPlayDate = undefined;
       mockProfile.progress.currentStreak = 0;
+      mockProfile.progress.longestStreak = 0;
       
       const result = StreakTracker.updateStreak(mockProfile);
 
@@ -206,7 +213,7 @@ describe('PersonalBestTracker', () => {
 
       expect(stats.bestProfit).toBe(25.50);
       expect(stats.totalRuns).toBe(5);
-      expect(stats.lastPlayDate).toBe('2024-01-14');
+      expect(stats.lastPlayDate).toBe(mockProfile.progress.lastPlayDate);
       expect(stats.averageProfit).toBe(20.05); // 100.25 / 5
     });
 
@@ -269,12 +276,12 @@ describe('ProgressService', () => {
         currentStreak: 4, // Will become 5 after update
         longestStreak: 3,
         bestProfit: 20.00,
-        lastPlayDate: '2024-01-14',
+        lastPlayDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Yesterday
         totalProfit: 80.00
       },
       powerups: {
         usedToday: {},
-        lastResetDate: '2024-01-15'
+        lastResetDate: new Date().toISOString().split('T')[0]
       }
     };
 

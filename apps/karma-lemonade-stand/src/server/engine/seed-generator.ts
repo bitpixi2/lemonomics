@@ -29,6 +29,17 @@ export class SeedGenerator {
   createSeededRandom(seed: string): () => number {
     let seedNum = parseInt(seed, 10);
     
+    // If seed is not a valid number, create a hash from the string
+    if (isNaN(seedNum)) {
+      seedNum = 0;
+      for (let i = 0; i < seed.length; i++) {
+        const char = seed.charCodeAt(i);
+        seedNum = ((seedNum << 5) - seedNum) + char;
+        seedNum = seedNum & seedNum; // Convert to 32-bit integer
+      }
+      seedNum = Math.abs(seedNum);
+    }
+    
     return function() {
       // Linear congruential generator
       seedNum = (seedNum * 1664525 + 1013904223) % Math.pow(2, 32);

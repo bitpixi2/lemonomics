@@ -51,9 +51,9 @@
     - Add mobile-friendly post formatting with action buttons
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
 
-- [-] 4. Implement game engine and scoring system
+- [x] 4. Implement game engine and scoring system
 
-  - [ ] 4.1 Create core game engine
+  - [x] 4.1 Create core game engine
 
     - Implement GameEngine class with run orchestration
     - Create deterministic seed generation based on user ID and run count
@@ -95,9 +95,9 @@
     - Reset leaderboards, power-up counters, and generate new cycles
     - _Requirements: 12.2, 12.3_
 
-- [-] 6. Implement login bonus system
+- [x] 6. Implement login bonus system
 
-  - [-] 6.1 Create bonus determination logic
+  - [x] 6.1 Create bonus determination logic
     - Generate daily login bonuses using daily seed
     - Implement PERFECT (1.15x revenue), FREE_AD (+2 credits), COOLER (ignore cold) bonuses
     - Store bonus state in user profile with 24-hour duration

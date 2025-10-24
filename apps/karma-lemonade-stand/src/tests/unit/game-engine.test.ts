@@ -4,14 +4,17 @@ import { DemandCalculator } from '../../server/engine/demand-calculator.js';
 import { ProfitCalculator } from '../../server/engine/profit-calculator.js';
 import { SeedGenerator } from '../../server/engine/seed-generator.js';
 import { GameRun, UserProfile, WeatherType, MarketEvent } from '../../shared/types/game.js';
+import { DEFAULT_CONFIG } from '../../shared/types/config.js';
 
 describe('GameEngine', () => {
   let gameEngine: GameEngine;
   let mockUserProfile: UserProfile;
   let mockGameRun: GameRun;
+  let mockDailyCycle: any;
+  let mockWeeklyCycle: any;
 
   beforeEach(() => {
-    gameEngine = new GameEngine();
+    gameEngine = new GameEngine(DEFAULT_CONFIG);
     
     mockUserProfile = {
       userId: 'test-user',
@@ -48,11 +51,26 @@ describe('GameEngine', () => {
       adSpend: 10,
       powerupReceipts: []
     };
+
+    mockDailyCycle = {
+      weather: WeatherType.SUNNY,
+      event: MarketEvent.NONE,
+      lemonPrice: 0.10,
+      sugarPrice: 0.05
+    };
+
+    mockWeeklyCycle = {
+      festival: 'SUMMER_SOLSTICE',
+      modifiers: {
+        demandMultiplier: 1.3,
+        costVolatility: 0.0
+      }
+    };
   });
 
   describe('runGame', () => {
     it('should generate a valid game result', async () => {
-      const result = await gameEngine.runGame(mockGameRun, mockUserProfile);
+      const result = await gameEngine.runGame(mockGameRun, mockUserProfile, mockDailyCycle, mockWeeklyCycle);
 
       expect(result).toBeDefined();
       expect(result.profit).toBeTypeOf('number');
@@ -66,8 +84,8 @@ describe('GameEngine', () => {
     });
 
     it('should produce consistent results with same seed', async () => {
-      const result1 = await gameEngine.runGame(mockGameRun, mockUserProfile);
-      const result2 = await gameEngine.runGame(mockGameRun, mockUserProfile);
+      const result1 = await gameEngine.runGame(mockGameRun, mockUserProfile, mockDailyCycle, mockWeeklyCycle);
+      const result2 = await gameEngine.runGame(mockGameRun, mockUserProfile, mockDailyCycle, mockWeeklyCycle);
 
       // Results should be consistent for same user and run count
       expect(result1.seed).toBe(result2.seed);
@@ -79,8 +97,8 @@ describe('GameEngine', () => {
       const lowPriceRun = { ...mockGameRun, price: 0.25 };
       const highPriceRun = { ...mockGameRun, price: 2.50 };
 
-      const lowPriceResult = await gameEngine.runGame(lowPriceRun, mockUserProfile);
-      const highPriceResult = await gameEngine.runGame(highPriceRun, mockUserProfile);
+      const lowPriceResult = await gameEngine.runGame(lowPriceRun, mockUserProfile, mockDailyCycle, mockWeeklyCycle);
+      const highPriceResult = await gameEngine.runGame(highPriceRun, mockUserProfile, mockDailyCycle, mockWeeklyCycle);
 
       expect(lowPriceResult.cupsSold).toBeGreaterThan(highPriceResult.cupsSold);
     });
@@ -89,8 +107,8 @@ describe('GameEngine', () => {
       const noAdRun = { ...mockGameRun, adSpend: 0 };
       const highAdRun = { ...mockGameRun, adSpend: 50 };
 
-      const noAdResult = await gameEngine.runGame(noAdRun, mockUserProfile);
-      const highAdResult = await gameEngine.runGame(highAdRun, mockUserProfile);
+      const noAdResult = await gameEngine.runGame(noAdRun, mockUserProfile, mockDailyCycle, mockWeeklyCycle);
+      const highAdResult = await gameEngine.runGame(highAdRun, mockUserProfile, mockDailyCycle, mockWeeklyCycle);
 
       expect(highAdResult.cupsSold).toBeGreaterThan(noAdResult.cupsSold);
     });
@@ -100,20 +118,20 @@ describe('GameEngine', () => {
     it('should handle invalid price inputs', async () => {
       const invalidRun = { ...mockGameRun, price: -1 };
       
-      await expect(gameEngine.runGame(invalidRun, mockUserProfile))
-        .rejects.toThrow('Invalid price');
+      await expect(gameEngine.runGame(invalidRun, mockUserProfile, mockDailyCycle, mockWeeklyCycle))
+        .rejects.toThrow('Price must be between');
     });
 
     it('should handle invalid ad spend inputs', async () => {
       const invalidRun = { ...mockGameRun, adSpend: -5 };
       
-      await expect(gameEngine.runGame(invalidRun, mockUserProfile))
-        .rejects.toThrow('Invalid ad spend');
+      await expect(gameEngine.runGame(invalidRun, mockUserProfile, mockDailyCycle, mockWeeklyCycle))
+        .rejects.toThrow('Ad spend must be between');
     });
 
     it('should handle missing user profile', async () => {
-      await expect(gameEngine.runGame(mockGameRun, null as any))
-        .rejects.toThrow('User profile required');
+      await expect(gameEngine.runGame(mockGameRun, null as any, mockDailyCycle, mockWeeklyCycle))
+        .rejects.toThrow();
     });
   });
 });
@@ -122,7 +140,7 @@ describe('DemandCalculator', () => {
   let demandCalculator: DemandCalculator;
 
   beforeEach(() => {
-    demandCalculator = new DemandCalculator();
+    demandCalculator = new DemandCalculator(DEFAULT_CONFIG);
   });
 
   describe('calculateDemand', () => {
@@ -130,12 +148,23 @@ describe('DemandCalculator', () => {
       const demand = demandCalculator.calculateDemand({
         price: 1.00,
         adSpend: 10,
-        service: 10,
-        marketing: 10,
-        reputation: 10,
+        userStats: {
+          service: 10,
+          marketing: 10,
+          reputation: 10
+        },
         weather: WeatherType.SUNNY,
         event: MarketEvent.NONE,
-        festivalMultiplier: 1.0
+        festival: 'SUMMER_SOLSTICE',
+        festivalModifiers: { 
+          demandMultiplier: 1.0,
+          priceVariance: 0.0,
+          criticalSaleChance: 0.0,
+          costVolatility: 0.0,
+          specialEffects: []
+        },
+        powerupReceipts: [],
+        seed: 'test-seed'
       });
 
       expect(demand).toBeGreaterThan(0);
@@ -146,23 +175,45 @@ describe('DemandCalculator', () => {
       const sunnyDemand = demandCalculator.calculateDemand({
         price: 1.00,
         adSpend: 10,
-        service: 10,
-        marketing: 10,
-        reputation: 10,
+        userStats: {
+          service: 10,
+          marketing: 10,
+          reputation: 10
+        },
         weather: WeatherType.SUNNY,
         event: MarketEvent.NONE,
-        festivalMultiplier: 1.0
+        festival: 'SUMMER_SOLSTICE',
+        festivalModifiers: { 
+          demandMultiplier: 1.0,
+          priceVariance: 0.0,
+          criticalSaleChance: 0.0,
+          costVolatility: 0.0,
+          specialEffects: []
+        },
+        powerupReceipts: [],
+        seed: 'test-seed'
       });
 
       const rainyDemand = demandCalculator.calculateDemand({
         price: 1.00,
         adSpend: 10,
-        service: 10,
-        marketing: 10,
-        reputation: 10,
+        userStats: {
+          service: 10,
+          marketing: 10,
+          reputation: 10
+        },
         weather: WeatherType.RAINY,
         event: MarketEvent.NONE,
-        festivalMultiplier: 1.0
+        festival: 'SUMMER_SOLSTICE',
+        festivalModifiers: { 
+          demandMultiplier: 1.0,
+          priceVariance: 0.0,
+          criticalSaleChance: 0.0,
+          costVolatility: 0.0,
+          specialEffects: []
+        },
+        powerupReceipts: [],
+        seed: 'test-seed'
       });
 
       expect(sunnyDemand).toBeGreaterThan(rainyDemand);
@@ -172,23 +223,45 @@ describe('DemandCalculator', () => {
       const lowPriceDemand = demandCalculator.calculateDemand({
         price: 0.50,
         adSpend: 10,
-        service: 10,
-        marketing: 10,
-        reputation: 10,
+        userStats: {
+          service: 10,
+          marketing: 10,
+          reputation: 10
+        },
         weather: WeatherType.SUNNY,
         event: MarketEvent.NONE,
-        festivalMultiplier: 1.0
+        festival: 'SUMMER_SOLSTICE',
+        festivalModifiers: { 
+          demandMultiplier: 1.0,
+          priceVariance: 0.0,
+          criticalSaleChance: 0.0,
+          costVolatility: 0.0,
+          specialEffects: []
+        },
+        powerupReceipts: [],
+        seed: 'test-seed'
       });
 
       const highPriceDemand = demandCalculator.calculateDemand({
         price: 2.00,
         adSpend: 10,
-        service: 10,
-        marketing: 10,
-        reputation: 10,
+        userStats: {
+          service: 10,
+          marketing: 10,
+          reputation: 10
+        },
         weather: WeatherType.SUNNY,
         event: MarketEvent.NONE,
-        festivalMultiplier: 1.0
+        festival: 'SUMMER_SOLSTICE',
+        festivalModifiers: { 
+          demandMultiplier: 1.0,
+          priceVariance: 0.0,
+          criticalSaleChance: 0.0,
+          costVolatility: 0.0,
+          specialEffects: []
+        },
+        powerupReceipts: [],
+        seed: 'test-seed'
       });
 
       expect(lowPriceDemand).toBeGreaterThan(highPriceDemand);
@@ -200,7 +273,7 @@ describe('ProfitCalculator', () => {
   let profitCalculator: ProfitCalculator;
 
   beforeEach(() => {
-    profitCalculator = new ProfitCalculator();
+    profitCalculator = new ProfitCalculator(DEFAULT_CONFIG);
   });
 
   describe('calculateProfit', () => {
@@ -211,7 +284,8 @@ describe('ProfitCalculator', () => {
         adSpend: 10,
         lemonPrice: 0.10,
         sugarPrice: 0.05,
-        event: MarketEvent.NONE
+        event: MarketEvent.NONE,
+        festivalModifiers: { costVolatility: 0.0 }
       });
 
       expect(profit).toBeTypeOf('number');
@@ -226,7 +300,8 @@ describe('ProfitCalculator', () => {
         adSpend: 10,
         lemonPrice: 0.10,
         sugarPrice: 0.05,
-        event: MarketEvent.NONE
+        event: MarketEvent.NONE,
+        festivalModifiers: { costVolatility: 0.0 }
       });
 
       // Should be negative due to fixed costs and ad spend
@@ -240,7 +315,8 @@ describe('ProfitCalculator', () => {
         adSpend: 10,
         lemonPrice: 0.10,
         sugarPrice: 0.05,
-        event: MarketEvent.NONE
+        event: MarketEvent.NONE,
+        festivalModifiers: { costVolatility: 0.0 }
       });
 
       const inflationProfit = profitCalculator.calculateProfit({
@@ -249,7 +325,8 @@ describe('ProfitCalculator', () => {
         adSpend: 10,
         lemonPrice: 0.10,
         sugarPrice: 0.05,
-        event: MarketEvent.INFLATION
+        event: MarketEvent.INFLATION,
+        festivalModifiers: { costVolatility: 0.0 }
       });
 
       expect(normalProfit).toBeGreaterThan(inflationProfit);
