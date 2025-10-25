@@ -7,5 +7,5 @@ const container = document.getElementById('game');
 
 if (container) {
   const root = createRoot(container);
-  root.render(React.createElement(App));
+  root.render(<App />);
 }
