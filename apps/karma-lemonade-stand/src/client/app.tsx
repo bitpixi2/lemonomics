@@ -198,7 +198,7 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleRunGame = async (price: number, adSpend: number) => {
+  const handleRunGame = async (price: number, adSpend: number, standData?: any) => {
     try {
       setGameState(prev => ({ ...prev, isLoading: true }));
 
@@ -229,12 +229,76 @@ export const App: React.FC = () => {
         console.log('API not available, using mock calculation');
       }
 
-      // Generate different weather for each day to make it interesting
-      const weatherOptions = [WeatherType.SUNNY, WeatherType.HOT, WeatherType.RAINY];
-      const weather = weatherOptions[gameState.currentDay - 1] || WeatherType.SUNNY;
+      // Classic Lemonade Stand Logic
+      const weather = gameState.currentCycle?.weather || WeatherType.SUNNY;
       const event = gameState.currentCycle?.event || MarketEvent.NONE;
       
-      // Simple demand calculation based on price and weather
+      if (standData) {
+        // Use classic lemonade stand calculation
+        const { lemons, sugar, glasses, signs, priceInCents, totalCost } = standData;
+        
+        // Calculate demand based on classic BASIC game logic
+        const optimalPrice = 10; // 10 cents is optimal
+        const baseCustomers = 30;
+        
+        let demandMultiplier;
+        if (priceInCents >= optimalPrice) {
+          // Higher prices reduce demand exponentially
+          demandMultiplier = (optimalPrice * optimalPrice) * baseCustomers / (priceInCents * priceInCents);
+        } else {
+          // Lower prices increase demand linearly
+          demandMultiplier = (optimalPrice - priceInCents) / optimalPrice * 0.8 * baseCustomers + baseCustomers;
+        }
+        
+        // Weather effects
+        let weatherMultiplier = 1.0;
+        if (weather === WeatherType.SUNNY) weatherMultiplier = 1.2;
+        if (weather === WeatherType.HOT) weatherMultiplier = 1.5;
+        if (weather === WeatherType.RAINY) weatherMultiplier = 0.5;
+        if (weather === WeatherType.COLD) weatherMultiplier = 0.3;
+        
+        // Advertising effect (diminishing returns)
+        const adEffect = -signs * 0.5;
+        const adMultiplier = 1 - (Math.exp(adEffect) * 1);
+        
+        // Calculate final demand
+        let totalDemand = weatherMultiplier * (demandMultiplier + (demandMultiplier * adMultiplier));
+        totalDemand = Math.floor(Math.max(0, totalDemand));
+        
+        // Can't sell more than you made
+        const glassesSold = Math.min(totalDemand, glasses);
+        
+        // Calculate financials
+        const revenue = glassesSold * (priceInCents / 100);
+        const profit = revenue - totalCost;
+        
+        const mockResult: GameResult = {
+          profit: Math.round(profit * 100) / 100,
+          cupsSold: glassesSold,
+          weather,
+          event,
+          festival: 'default',
+          streak: gameState.currentDay,
+          seed: `day-${gameState.currentDay}`,
+          powerupsApplied: []
+        };
+        
+        const newDayResults = [...gameState.dayResults, mockResult];
+        const newTotalProfit = gameState.totalProfit + mockResult.profit;
+
+        setGameState(prev => ({
+          ...prev,
+          phase: 'results',
+          gameResult: mockResult,
+          dayResults: newDayResults,
+          totalProfit: newTotalProfit,
+          isLoading: false
+        }));
+        
+        return;
+      }
+      
+      // Fallback simple calculation if no standData
       let baseDemand = 100;
       if (weather === WeatherType.SUNNY) baseDemand *= 1.2;
       if (weather === WeatherType.HOT) baseDemand *= 1.5;
@@ -242,11 +306,11 @@ export const App: React.FC = () => {
       if (price > 2) baseDemand *= 0.7;
       if (price < 1) baseDemand *= 1.3;
       
-      const adBoost = Math.min(adSpend / 10, 2); // Max 2x boost from ads
+      const adBoost = Math.min(adSpend / 10, 2);
       const finalDemand = Math.floor(baseDemand * (1 + adBoost));
       
       const revenue = finalDemand * price;
-      const costs = finalDemand * 0.3 + adSpend; // 30 cents per cup + ad spend
+      const costs = finalDemand * 0.3 + adSpend;
       const profit = revenue - costs;
 
       const mockResult: GameResult = {

@@ -1,8 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { WeatherType, MarketEvent, DailyCycle, WeeklyCycle } from '../../shared/types/game.js';
 
+interface LemonadeStandData {
+  lemons: number;
+  sugar: number;
+  glasses: number;
+  signs: number;
+  priceInCents: number;
+  totalCost: number;
+}
+
 interface GameUIProps {
-  onRunGame: (price: number, adSpend: number) => void;
+  onRunGame: (price: number, adSpend: number, standData?: LemonadeStandData) => void;
   currentCycle?: DailyCycle;
   weeklyFestival?: WeeklyCycle;
   isLoading?: boolean;
@@ -18,14 +27,41 @@ export const GameUI = ({
   currentDay,
   maxDays
 }: GameUIProps) => {
-  const [price, setPrice] = useState(0.50);
-  const [adSpend, setAdSpend] = useState(0);
+  // Classic lemonade stand inputs
+  const [lemons, setLemons] = useState(10);        // How many lemons to buy
+  const [sugar, setSugar] = useState(5);           // How many cups of sugar to buy  
+  const [glasses, setGlasses] = useState(20);      // How many glasses to make
+  const [signs, setSigns] = useState(2);           // How many advertising signs to make
+  const [priceInCents, setPriceInCents] = useState(10); // Price per glass in cents
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (price > 0 && adSpend >= 0) {
-      onRunGame(price, adSpend);
+    
+    // Calculate total costs
+    const lemonCost = lemons * (currentCycle?.lemonPrice || 0.05);
+    const sugarCost = sugar * (currentCycle?.sugarPrice || 0.03);
+    const signCost = signs * 0.15; // 15 cents per sign
+    const totalCost = lemonCost + sugarCost + signCost;
+    
+    // Validate we can make the glasses with ingredients
+    const maxGlassesFromLemons = lemons * 2; // 2 glasses per lemon
+    const maxGlassesFromSugar = sugar * 4;   // 4 glasses per cup of sugar
+    const maxGlasses = Math.min(maxGlassesFromLemons, maxGlassesFromSugar);
+    
+    if (glasses > maxGlasses) {
+      alert(`You can only make ${maxGlasses} glasses with ${lemons} lemons and ${sugar} cups of sugar!`);
+      return;
     }
+    
+    // Pass the classic lemonade stand data
+    onRunGame(priceInCents / 100, 0, {
+      lemons,
+      sugar, 
+      glasses,
+      signs,
+      priceInCents,
+      totalCost
+    });
   };
 
   const getWeatherIcon = (weather: WeatherType) => {
@@ -123,56 +159,115 @@ export const GameUI = ({
         )}
       </div>
 
-      {/* Game Controls */}
+      {/* Classic Lemonade Stand Controls */}
       <form onSubmit={handleSubmit} className="game-controls">
-        <h3>Set Your Strategy</h3>
+        <h3>🛒 Purchase Ingredients & Supplies</h3>
         
         <div className="input-group">
-          <label htmlFor="price">Lemonade Price</label>
-          <div className="price-input">
-            <span className="currency">$</span>
-            <input
-              id="price"
-              type="number"
-              min="0.10"
-              max="5.00"
-              step="0.05"
-              value={price}
-              onChange={(e) => setPrice(parseFloat(e.target.value))}
-              disabled={isLoading}
-            />
-          </div>
+          <label htmlFor="lemons">🍋 Lemons to Buy</label>
+          <input
+            id="lemons"
+            type="number"
+            min="0"
+            max="100"
+            value={lemons}
+            onChange={(e) => setLemons(parseInt(e.target.value) || 0)}
+            disabled={isLoading}
+          />
           <div className="input-hint">
-            Recommended: $0.25 - $1.50
+            Cost: ${((currentCycle?.lemonPrice || 0.05) * lemons).toFixed(2)} 
+            (${(currentCycle?.lemonPrice || 0.05).toFixed(2)} each) • Makes {lemons * 2} glasses
           </div>
         </div>
 
         <div className="input-group">
-          <label htmlFor="adSpend">Advertising Budget</label>
-          <div className="price-input">
-            <span className="currency">$</span>
-            <input
-              id="adSpend"
-              type="number"
-              min="0"
-              max="50"
-              step="1"
-              value={adSpend}
-              onChange={(e) => setAdSpend(parseInt(e.target.value))}
-              disabled={isLoading}
-            />
-          </div>
+          <label htmlFor="sugar">🍬 Cups of Sugar to Buy</label>
+          <input
+            id="sugar"
+            type="number"
+            min="0"
+            max="50"
+            value={sugar}
+            onChange={(e) => setSugar(parseInt(e.target.value) || 0)}
+            disabled={isLoading}
+          />
           <div className="input-hint">
-            More ads = more customers
+            Cost: ${((currentCycle?.sugarPrice || 0.03) * sugar).toFixed(2)} 
+            (${(currentCycle?.sugarPrice || 0.03).toFixed(2)} each) • Makes {sugar * 4} glasses
+          </div>
+        </div>
+
+        <div className="input-group">
+          <label htmlFor="glasses">🥤 Glasses to Make</label>
+          <input
+            id="glasses"
+            type="number"
+            min="0"
+            max="200"
+            value={glasses}
+            onChange={(e) => setGlasses(parseInt(e.target.value) || 0)}
+            disabled={isLoading}
+          />
+          <div className="input-hint">
+            Max possible: {Math.min(lemons * 2, sugar * 4)} glasses 
+            (limited by ingredients)
+          </div>
+        </div>
+
+        <div className="input-group">
+          <label htmlFor="signs">📢 Advertising Signs to Make</label>
+          <input
+            id="signs"
+            type="number"
+            min="0"
+            max="20"
+            value={signs}
+            onChange={(e) => setSigns(parseInt(e.target.value) || 0)}
+            disabled={isLoading}
+          />
+          <div className="input-hint">
+            Cost: ${(signs * 0.15).toFixed(2)} (15¢ each) • Attracts more customers
+          </div>
+        </div>
+
+        <div className="input-group">
+          <label htmlFor="price-cents">💵 Price per Glass (cents)</label>
+          <input
+            id="price-cents"
+            type="number"
+            min="1"
+            max="100"
+            value={priceInCents}
+            onChange={(e) => setPriceInCents(parseInt(e.target.value) || 10)}
+            disabled={isLoading}
+          />
+          <div className="input-hint">
+            ${(priceInCents / 100).toFixed(2)} per glass • Sweet spot: 8-15¢
+          </div>
+        </div>
+
+        <div className="cost-summary">
+          <h4>💰 Total Costs</h4>
+          <div className="cost-breakdown">
+            <div>Lemons: ${((currentCycle?.lemonPrice || 0.05) * lemons).toFixed(2)}</div>
+            <div>Sugar: ${((currentCycle?.sugarPrice || 0.03) * sugar).toFixed(2)}</div>
+            <div>Signs: ${(signs * 0.15).toFixed(2)}</div>
+            <div className="total-cost">
+              <strong>Total: ${(
+                (currentCycle?.lemonPrice || 0.05) * lemons + 
+                (currentCycle?.sugarPrice || 0.03) * sugar + 
+                signs * 0.15
+              ).toFixed(2)}</strong>
+            </div>
           </div>
         </div>
 
         <button 
           type="submit" 
           className="run-button"
-          disabled={isLoading || price <= 0}
+          disabled={isLoading || glasses <= 0}
         >
-          {isLoading ? 'Running Stand...' : '🍋 Run Lemonade Stand!'}
+          {isLoading ? 'Opening Stand...' : '🚀 Open Lemonade Stand!'}
         </button>
       </form>
     </div>

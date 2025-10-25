@@ -988,3 +988,136 @@
     gap: 0.5rem;
   }
 }
+/* Classic Lemonade Stand Controls */
+.game-controls {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.game-controls h3 {
+  margin: 0 0 1.5rem 0;
+  color: #2c3e50;
+  text-align: center;
+  font-size: 1.3rem;
+}
+
+.input-group {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+}
+
+.input-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+  font-size: 1.1rem;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1.1rem;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+}
+
+.input-hint {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #666;
+  font-style: italic;
+}
+
+.cost-summary {
+  background: #e8f5e8;
+  border: 2px solid #4CAF50;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1.5rem 0;
+}
+
+.cost-summary h4 {
+  margin: 0 0 0.75rem 0;
+  color: #2c3e50;
+  text-align: center;
+}
+
+.cost-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cost-breakdown > div {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+}
+
+.total-cost {
+  border-top: 2px solid #4CAF50;
+  padding-top: 0.5rem !important;
+  margin-top: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.run-button {
+  width: 100%;
+  background: linear-gradient(45deg, #32CD32, #228B22);
+  color: white;
+  border: 3px solid #333;
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
+}
+
+.run-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(50, 205, 50, 0.4);
+  background: linear-gradient(45deg, #3CB371, #2E8B57);
+}
+
+.run-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .input-group {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .input-group input {
+    padding: 0.6rem;
+    font-size: 1rem;
+  }
+  
+  .cost-breakdown {
+    font-size: 0.9rem;
+  }
+}
