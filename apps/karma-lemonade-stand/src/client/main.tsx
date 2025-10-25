@@ -1,4 +1,4 @@
-import React from 'react';
+// React import removed - not needed for JSX in modern React
 import { createRoot } from 'react-dom/client';
 import { App } from './app.js';
 

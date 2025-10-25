@@ -1,4 +1,4 @@
-import React from 'react';
+// React import removed - not needed for JSX in modern React
 import { GameResult } from '../../shared/types/game.js';
 
 // Define ProgressUpdate locally since we can't import from server in client
@@ -147,15 +147,15 @@ export const ResultDisplay = ({
         <div className="progress-info">
           <div className="progress-row">
             <span className="label">Current Streak:</span>
-            <span className="value">{progress.streak.currentStreak} days</span>
+            <span className="value">{progress.streak?.currentStreak || 0} days</span>
           </div>
           <div className="progress-row">
             <span className="label">Best Profit:</span>
-            <span className="value">{formatCurrency(progress.personalBest.bestProfit)}</span>
+            <span className="value">{formatCurrency(progress.personalBest?.bestProfit || 0)}</span>
           </div>
           <div className="progress-row">
             <span className="label">Total Runs:</span>
-            <span className="value">{progress.personalBest.totalRuns}</span>
+            <span className="value">{progress.personalBest?.totalRuns || 0}</span>
           </div>
         </div>
       )}

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { audioManager } from '../services/audio-manager.js';
 
 export const useAudio = () => {
