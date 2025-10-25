@@ -3,6 +3,7 @@ import { GameUI } from './components/game-ui.js';
 import { FestivalThemeRenderer } from './components/festival-theme-renderer.js';
 import { ResultDisplay } from './components/result-display.js';
 import { LeaderboardDisplay } from './components/leaderboard-display.js';
+import { audioManager } from './services/audio-manager.js';
 import { 
   GameResult, 
   DailyCycle, 
@@ -14,7 +15,11 @@ import {
 } from '../shared/types/game.js';
 
 interface GameState {
-  phase: 'loading' | 'playing' | 'results' | 'leaderboard';
+  phase: 'splash' | 'loading' | 'playing' | 'results' | 'leaderboard' | 'complete';
+  currentDay: number;
+  maxDays: number;
+  dayResults: GameResult[];
+  totalProfit: number;
   currentCycle?: DailyCycle;
   weeklyFestival?: WeeklyCycle;
   userProfile?: UserProfile;
@@ -23,21 +28,70 @@ interface GameState {
   weeklyLeaderboard?: Leaderboard;
   isLoading: boolean;
   error?: string;
+  progressUpdate?: any;
 }
 
 export const App: React.FC = () => {
   const [gameState, setGameState] = useState<GameState>({
-    phase: 'loading',
-    isLoading: true
+    phase: 'splash',
+    currentDay: 1,
+    maxDays: 3,
+    dayResults: [],
+    totalProfit: 0,
+    isLoading: false
   });
 
   useEffect(() => {
-    initializeGame();
+    // Only initialize audio on startup, don't auto-load game data
+    initializeAudio();
+    
+    // Set up splash screen button handler
+    const startButton = document.getElementById('start-button');
+    if (startButton) {
+      startButton.addEventListener('click', handleStartGame);
+    }
+    
+    return () => {
+      if (startButton) {
+        startButton.removeEventListener('click', handleStartGame);
+      }
+    };
   }, []);
+
+  const handleStartGame = () => {
+    // Hide splash screen and show game
+    const splash = document.getElementById('splash');
+    const gameContainer = document.getElementById('game');
+    
+    if (splash) splash.style.display = 'none';
+    if (gameContainer) gameContainer.style.display = 'block';
+    
+    // Start loading the game
+    setGameState(prev => ({ ...prev, phase: 'loading' }));
+    initializeGame();
+  };
+
+  const initializeAudio = async () => {
+    try {
+      // Initialize audio system
+      await audioManager.initialize();
+      
+      // Preload game sounds
+      await audioManager.preloadGameSounds();
+      
+      // Play the lemonade pour sound as a welcome
+      setTimeout(() => {
+        audioManager.playSound('lemonade-pour', 0.6);
+      }, 500);
+      
+    } catch (error) {
+      console.log('Audio initialization failed (this is normal if no audio files are present):', error);
+    }
+  };
 
   const initializeGame = async () => {
     try {
-      setGameState(prev => ({ ...prev, isLoading: true, error: undefined }));
+      setGameState(prev => ({ ...prev, isLoading: true, error: '' }));
 
       // Try to load initial game data, but fallback to mock data if it fails
       try {
@@ -203,10 +257,15 @@ export const App: React.FC = () => {
         powerupsApplied: []
       };
 
+      const newDayResults = [...gameState.dayResults, mockResult];
+      const newTotalProfit = gameState.totalProfit + mockResult.profit;
+
       setGameState(prev => ({
         ...prev,
         phase: 'results',
         gameResult: mockResult,
+        dayResults: newDayResults,
+        totalProfit: newTotalProfit,
         isLoading: false
       }));
 
@@ -221,12 +280,24 @@ export const App: React.FC = () => {
   };
 
   const handlePlayAgain = () => {
-    setGameState(prev => ({
-      ...prev,
-      phase: 'playing',
-      gameResult: undefined,
-      progressUpdate: undefined
-    }));
+    if (gameState.currentDay < gameState.maxDays) {
+      // Move to next day
+      setGameState(prev => ({
+        ...prev,
+        phase: 'playing',
+        currentDay: prev.currentDay + 1,
+        gameResult: undefined,
+        progressUpdate: undefined
+      }));
+    } else {
+      // All days complete, show completion screen
+      setGameState(prev => ({
+        ...prev,
+        phase: 'complete',
+        gameResult: undefined,
+        progressUpdate: undefined
+      }));
+    }
   };
 
   const handleShowLeaderboard = async () => {

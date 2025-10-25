@@ -9,6 +9,13 @@ import { HealthCheckService } from '../monitoring/health-check.js';
 import { SystemMonitor } from '../monitoring/system-monitor.js';
 import { GameAnalyticsService } from '../monitoring/game-analytics.js';
 import { DataMaintenanceService } from '../maintenance/data-maintenance.js';
+import { 
+  getMarketNews, 
+  getCustomerDialogue, 
+  getCustomerInteractions, 
+  getBreakingNews, 
+  getAIStatus 
+} from './ai-content-endpoint.js';
 
 export class APIServer {
   private app: express.Application;
@@ -239,6 +246,13 @@ export class APIServer {
     this.app.get('/api/bonus/validate', (req, res) => {
       this.bonusEndpoint.handleValidateBonusClaim(req, res);
     });
+
+    // AI Content endpoints
+    this.app.get('/api/market-news', getMarketNews);
+    this.app.get('/api/customer-dialogue', getCustomerDialogue);
+    this.app.get('/api/customer-interactions', getCustomerInteractions);
+    this.app.post('/api/breaking-news', getBreakingNews);
+    this.app.get('/api/ai-status', getAIStatus);
 
     // Analytics endpoints
     this.app.get('/api/analytics', (req, res) => {

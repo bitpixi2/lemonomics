@@ -7,6 +7,8 @@ import { BonusService } from '../services/bonus-service.js';
 import { UserProfileAdapter } from '../../shared/redis/user-profile-adapter.js';
 import { LeaderboardAdapter } from '../../shared/redis/leaderboard-adapter.js';
 import { GameRun, GameResult, UserProfile } from '../../shared/types/game.js';
+import { marketNewsGenerator } from '../ai/market-news-generator.js';
+import { customerDialogueGenerator } from '../ai/customer-dialogue-generator.js';
 
 export interface GameRunRequest {
   price: number;
@@ -19,6 +21,10 @@ export interface GameRunResponse {
   result?: GameResult;
   progress?: any;
   updatedProfile?: UserProfile;
+  aiContent?: {
+    marketNews?: any;
+    customerDialogue?: any;
+  };
   error?: string;
   rateLimitInfo?: {
     remaining: number;
@@ -149,12 +155,40 @@ export class GameRunEndpoint {
         console.warn(`Suspicious game result for user ${userId}:`, validationCheck.reason);
       }
 
+      // Generate AI content for enhanced experience
+      let aiContent = {};
+      try {
+        const [marketNews, customerDialogue] = await Promise.all([
+          marketNewsGenerator.generateDailyNews(
+            gameResult.weather,
+            gameResult.event,
+            gameResult.festival
+          ),
+          customerDialogueGenerator.generateCustomerDialogue(
+            gameResult.weather,
+            gameResult.event,
+            price,
+            userProfile.gameStats.service,
+            gameResult.festival
+          )
+        ]);
+
+        aiContent = {
+          marketNews,
+          customerDialogue
+        };
+      } catch (error) {
+        console.error('AI content generation failed:', error);
+        // Continue without AI content - it's not critical for gameplay
+      }
+
       // Return successful response
       res.json({
         success: true,
         result: gameResult,
         progress: progressUpdate,
         updatedProfile,
+        aiContent,
         rateLimitInfo: {
           remaining: rateLimitResult.remaining - 1,
           resetTime: rateLimitResult.resetTime

@@ -6,13 +6,17 @@ interface GameUIProps {
   currentCycle?: DailyCycle;
   weeklyFestival?: WeeklyCycle;
   isLoading?: boolean;
+  currentDay?: number;
+  maxDays?: number;
 }
 
 export const GameUI: React.FC<GameUIProps> = ({ 
   onRunGame, 
   currentCycle, 
   weeklyFestival, 
-  isLoading = false 
+  isLoading = false,
+  currentDay = 1,
+  maxDays = 3
 }) => {
   const [price, setPrice] = useState(0.50);
   const [adSpend, setAdSpend] = useState(0);
@@ -55,6 +59,21 @@ export const GameUI: React.FC<GameUIProps> = ({
 
   return (
     <div className="game-ui">
+      {/* Day Progress Header */}
+      <div className="day-header">
+        <h2>Day {currentDay} of {maxDays}</h2>
+        <div className="day-progress">
+          {Array.from({ length: maxDays }, (_, i) => (
+            <div 
+              key={i} 
+              className={`day-dot ${i < currentDay ? 'completed' : i === currentDay - 1 ? 'current' : 'upcoming'}`}
+            >
+              {i + 1}
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Lemonade Stand Image */}
       <div className="stand-image">
         <img 

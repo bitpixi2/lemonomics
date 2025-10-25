@@ -7,13 +7,21 @@ interface ResultDisplayProps {
   progress?: ProgressUpdate;
   onPlayAgain: () => void;
   onShare?: () => void;
+  currentDay?: number;
+  maxDays?: number;
+  dayResults?: GameResult[];
+  totalProfit?: number;
 }
 
 export const ResultDisplay: React.FC<ResultDisplayProps> = ({ 
   result, 
   progress, 
   onPlayAgain, 
-  onShare 
+  onShare,
+  currentDay = 1,
+  maxDays = 3,
+  dayResults = [],
+  totalProfit = 0
 }) => {
   const isProfitable = result.profit > 0;
   const isNewBest = progress?.isNewBest || false;
@@ -41,13 +49,16 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({
     return '😞';
   };
 
+  const isLastDay = currentDay >= maxDays;
+  const nextButtonText = isLastDay ? '🏁 Finish Game' : `➡️ Continue to Day ${currentDay + 1}`;
+
   return (
     <div className="result-display">
       <div className="result-header">
         <div className="result-emoji">
           {getResultEmoji(result.profit)}
         </div>
-        <h2>Stand Results</h2>
+        <h2>Day {currentDay} Results</h2>
       </div>
 
       {/* Main Profit Display */}

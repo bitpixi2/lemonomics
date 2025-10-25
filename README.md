@@ -217,9 +217,9 @@ New festivals and features added regularly
 ### 🔮 Future AI Enhancements
 **Coming Soon with Kiro:**
 - 🎵 **Dynamic Audio** - Lemon squeeze sounds, rain effects, victory fanfares
-- 🎨 **AI-Generated Art** - Festival themes, character animations, backgrounds  
-- 🧠 **Smart NPCs** - AI-powered competitor players and dynamic market news
-- 🎬 **Replay System** - Auto-generated highlight reels with AI commentary
+- 🎨 **AI-Generated Content** - Daily market news and dynamic customer dialogue
+- 🏪 **User-Generated Stands** - Custom designs, decorations, and trading marketplace
+- 🍹 **Recipe Trading** - Create and trade unique drinks and snacks with other players
 
 *This project showcases how AI can accelerate game development while maintaining creativity and quality!*
 

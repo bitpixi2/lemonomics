@@ -12,21 +12,8 @@ Devvit.addCustomPostType({
   name: 'Lemonomics Game',
   height: 'regular',
   render: (context) => {
-    const { useState, useAsync } = context;
+    const { useState } = context;
     const [gameStarted, setGameStarted] = useState(false);
-
-    // Get user stats for preview
-    const userStats = useAsync(async () => {
-      try {
-        const user = await context.reddit.getCurrentUser();
-        return {
-          username: user?.username || 'Player',
-          karma: user?.linkKarma || 0,
-        };
-      } catch {
-        return { username: 'Player', karma: 0 };
-      }
-    });
 
     if (gameStarted) {
       return (
@@ -49,7 +36,7 @@ Devvit.addCustomPostType({
       >
         {/* Background banner image */}
         <image
-          url="lemonomics-banner.png"
+          url="assets/lemonomics-banner.png"
           description="Lemonomics Game Banner"
           width="100%"
           height="120px"
@@ -59,7 +46,7 @@ Devvit.addCustomPostType({
         <hstack gap="medium" alignment="center middle">
           {/* Lemon icon */}
           <image
-            url="lemon-icon.png"
+            url="assets/lemon-icon.png"
             description="Lemon Stand Icon"
             width="48px"
             height="48px"
@@ -75,7 +62,7 @@ Devvit.addCustomPostType({
           </vstack>
 
           <image
-            url="lemon-icon.png"
+            url="assets/lemon-icon.png"
             description="Lemon Stand Icon"
             width="48px"
             height="48px"
@@ -84,10 +71,10 @@ Devvit.addCustomPostType({
 
         <vstack gap="small" alignment="center">
           <text size="medium" color="secondary">
-            Welcome, {userStats.data?.username || 'Player'}!
+            Welcome, Player!
           </text>
           <text size="medium" color="secondary">
-            Your {userStats.data?.karma || 0} karma = business advantages
+            Your karma = business advantages
           </text>
         </vstack>
 
@@ -109,7 +96,9 @@ Devvit.addCustomPostType({
         <button
           appearance="primary"
           size="large"
-          onPress={() => setGameStarted(true)}
+          onPress={() => {
+            setGameStarted(true);
+          }}
         >
           🍋 Start Your Lemonade Stand! 🍋
         </button>
@@ -147,7 +136,7 @@ Devvit.addMenuItem({
             padding="large"
           >
             <image
-              url="lemonomics-banner.png"
+              url="assets/lemonomics-banner.png"
               description="Lemonomics Game Banner"
               width="100%"
               height="120px"
@@ -156,7 +145,7 @@ Devvit.addMenuItem({
 
             <hstack gap="medium" alignment="center middle">
               <image
-                url="lemon-icon.png"
+                url="assets/lemon-icon.png"
                 description="Lemon Stand Icon"
                 width="48px"
                 height="48px"
@@ -172,7 +161,7 @@ Devvit.addMenuItem({
               </vstack>
 
               <image
-                url="lemon-icon.png"
+                url="assets/lemon-icon.png"
                 description="Lemon Stand Icon"
                 width="48px"
                 height="48px"
