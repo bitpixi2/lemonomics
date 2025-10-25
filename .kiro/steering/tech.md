@@ -2,7 +2,7 @@
 
 ## Core Technologies
 - **Devvit**: Reddit's developer platform for building apps
-- **Three.js**: 3D graphics library for WebGL rendering
+- **React**: Frontend UI library for interactive components
 - **TypeScript**: Primary language with strict type checking
 - **Vite**: Build tool for both client and server bundles
 - **Express**: Server-side HTTP framework
@@ -43,5 +43,5 @@ npm run build:server
 - Devvit playtest provides live Reddit integration testing
 
 ## Dependencies
-- **Runtime**: @devvit/web, three, express
+- **Runtime**: @devvit/web, react, express
 - **Development**: TypeScript, ESLint, Prettier, Vite, Vitest

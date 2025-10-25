@@ -9,7 +9,7 @@ project:
 technology:
   language: "TypeScript"
   ui_framework: "Devvit Web (React-like)"
-  graphics: "Three.js r160"
+  graphics: "CSS/HTML (no 3D graphics)"
   build_tool: "Vite"
   package_manager: "pnpm"
   testing: "Vitest"

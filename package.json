@@ -18,16 +18,14 @@
     "login": "devvit login"
   },
   "dependencies": {
-    "@devvit/web": "0.12.0",
-    "devvit": "0.12.0",
-    "express": "5.1.0",
-    "three": "0.178.0"
+    "@devvit/web": "0.12.1",
+    "devvit": "0.12.1",
+    "express": "5.1.0"
   },
   "devDependencies": {
     "@eslint/js": "9.23.0",
     "@types/express": "5.0.1",
     "@types/node": "^20.19.21",
-    "@types/three": "0.137.0",
     "concurrently": "9.1.2",
     "dotenv-cli": "8.0.0",
     "eslint": "9.23.0",

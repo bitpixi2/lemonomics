@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Leaderboard } from '../../shared/types/game.js';
 
 interface LeaderboardDisplayProps {
-  dailyLeaderboard?: Leaderboard;
-  weeklyLeaderboard?: Leaderboard;
+  dailyLeaderboard?: Leaderboard | undefined;
+  weeklyLeaderboard?: Leaderboard | undefined;
   userRank?: {
     daily: number;
     weekly: number;

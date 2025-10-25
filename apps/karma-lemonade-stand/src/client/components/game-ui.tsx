@@ -12,8 +12,8 @@ interface LemonadeStandData {
 
 interface GameUIProps {
   onRunGame: (price: number, adSpend: number, standData?: LemonadeStandData) => void;
-  currentCycle?: DailyCycle;
-  weeklyFestival?: WeeklyCycle;
+  currentCycle?: DailyCycle | undefined;
+  weeklyFestival?: WeeklyCycle | undefined;
   isLoading?: boolean;
   currentDay: number;
   maxDays: number;

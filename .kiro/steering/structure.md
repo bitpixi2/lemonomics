@@ -9,8 +9,8 @@
 ## Source Organization
 
 ### `/src/client/`
-Client-side Three.js application that runs in the browser
-- `main.ts`: Entry point with Three.js scene setup and API calls
+Client-side React application that runs in the browser
+- `main.tsx`: Entry point with React app initialization
 - `index.html`: HTML template with canvas and UI elements
 - `index.css`: Styling for the web interface
 - `public/`: Static assets (Earth textures)

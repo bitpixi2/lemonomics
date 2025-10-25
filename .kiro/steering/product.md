@@ -1,9 +1,12 @@
 # Product Overview
 
-This is a **Devvit Three.js Game** - a game built with threejs that will be built with Devvit and run on Reddit
+This is a **Devvit React Web Game** - a classic lemonade stand game built with React that runs on Reddit
 
 ## Core Features
-- 3D game, built with Devvit to run on Reddit
+- Classic lemonade stand business simulation game
+- Multi-day progression (Day 1 → Day 2 → Day 3 → "Come back tomorrow")
+- Ingredient purchasing decisions (lemons, sugar, glasses, signs)
+- Weather effects and classic BASIC game math logic
 - Click the splash screen to open the game in full screen mode
 
 ## Platform Integration

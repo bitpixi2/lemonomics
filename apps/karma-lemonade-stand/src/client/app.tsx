@@ -235,7 +235,7 @@ export const App: React.FC = () => {
       
       if (standData) {
         // Use classic lemonade stand calculation
-        const { lemons, sugar, glasses, signs, priceInCents, totalCost } = standData;
+        const { glasses, signs, priceInCents, totalCost } = standData;
         
         // Calculate demand based on classic BASIC game logic
         const optimalPrice = 10; // 10 cents is optimal
