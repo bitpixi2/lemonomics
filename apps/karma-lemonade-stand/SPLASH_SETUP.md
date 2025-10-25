@@ -2,18 +2,18 @@
 
 ## Image Assets Required
 
-To complete the splash page setup, you need to add the following images to the `assets/` folder:
+To complete the splash page setup, you need to add the following images to the `public/assets/` folder:
 
 ### 1. App Icon (Square)
 
-- **File**: `assets/lemon-icon.png`
+- **File**: `public/assets/lemon-icon.png`
 - **Description**: The pixel art lemon icon you provided
 - **Usage**: App icon and favicon
 - **Recommended size**: 64x64px or 128x128px
 
 ### 2. Banner Image (Horizontal)
 
-- **File**: `assets/lemonomics-banner.png`
+- **File**: `public/assets/lemonomics-banner.png`
 - **Description**: The horizontal lemonade stand banner with "LEMONOMICS" text
 - **Usage**: Main splash screen banner
 - **Recommended size**: 400x200px or similar aspect ratio
@@ -21,7 +21,7 @@ To complete the splash page setup, you need to add the following images to the `
 ## How to Add Images
 
 1. Save your pixel art images as PNG files
-2. Place them in the `apps/karma-lemonade-stand/assets/` folder
+2. Place them in the `apps/karma-lemonade-stand/public/assets/` folder
 3. Make sure the filenames match:
    - `lemon-icon.png` (square lemon icon)
    - `lemonomics-banner.png` (horizontal banner)
@@ -53,4 +53,4 @@ To complete the splash page setup, you need to add the following images to the `
 2. Test the splash page in development
 3. Adjust image sizes if needed for optimal display
 
-The splash page is now ready with your requested branding and will display your pixel art images once they're added to the assets folder!
+The splash page is now ready with your requested branding and will display your pixel art images once they're added to the public/assets folder!

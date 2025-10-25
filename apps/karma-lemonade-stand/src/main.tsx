@@ -36,7 +36,7 @@ Devvit.addCustomPostType({
       >
         {/* Background banner image */}
         <image
-          url="assets/lemonomics-banner.png"
+          url="lemonomics-banner.png"
           description="Lemonomics Game Banner"
           width="100%"
           height="120px"
@@ -46,7 +46,7 @@ Devvit.addCustomPostType({
         <hstack gap="medium" alignment="center middle">
           {/* Lemon icon */}
           <image
-            url="assets/lemon-icon.png"
+            url="lemon-icon.png"
             description="Lemon Stand Icon"
             width="48px"
             height="48px"
@@ -62,7 +62,7 @@ Devvit.addCustomPostType({
           </vstack>
 
           <image
-            url="assets/lemon-icon.png"
+            url="lemon-icon.png"
             description="Lemon Stand Icon"
             width="48px"
             height="48px"
@@ -136,7 +136,7 @@ Devvit.addMenuItem({
             padding="large"
           >
             <image
-              url="assets/lemonomics-banner.png"
+              url="lemonomics-banner.png"
               description="Lemonomics Game Banner"
               width="100%"
               height="120px"
@@ -145,7 +145,7 @@ Devvit.addMenuItem({
 
             <hstack gap="medium" alignment="center middle">
               <image
-                url="assets/lemon-icon.png"
+                url="lemon-icon.png"
                 description="Lemon Stand Icon"
                 width="48px"
                 height="48px"
@@ -161,7 +161,7 @@ Devvit.addMenuItem({
               </vstack>
 
               <image
-                url="assets/lemon-icon.png"
+                url="lemon-icon.png"
                 description="Lemon Stand Icon"
                 width="48px"
                 height="48px"
