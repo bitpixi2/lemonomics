@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import { GameEngine } from '../engine/game-engine.js';
 import { ProgressService } from '../progress/progress-service.js';
-import { SecurityService } from '../security/security-service.js';
-import { PowerupManager } from '../payments/powerup-manager.js';
+// import { SecurityService } from '../security/security-service.js'; // Disabled for simplicity
+import { PowerupManager } from '../payments-disabled/payments/powerup-manager.js';
 import { BonusService } from '../services/bonus-service.js';
 import { UserProfileAdapter } from '../../shared/redis/user-profile-adapter.js';
 import { LeaderboardAdapter } from '../../shared/redis/leaderboard-adapter.js';

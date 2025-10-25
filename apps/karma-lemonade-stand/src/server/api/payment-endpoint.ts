@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { PaymentService } from '../payments/payment-service.js';
-import { PowerupManager } from '../payments/powerup-manager.js';
+import { PaymentService } from '../payments-disabled/payments/payment-service.js';
+import { PowerupManager } from '../payments-disabled/payments/powerup-manager.js';
 import { UserProfileAdapter } from '../../shared/redis/user-profile-adapter.js';
 
 export interface PurchaseRequest {

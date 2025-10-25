@@ -4,7 +4,7 @@ import { DemandCalculator } from './demand-calculator';
 import { ProfitCalculator } from './profit-calculator';
 import { SeedGenerator } from './seed-generator';
 import { BonusEffectsHandler, BonusEffectContext } from '../bonuses/bonus-effects-handler';
-import { PowerupManager } from '../payments/powerup-manager';
+import { PowerupManager } from '../payments-disabled/payments/powerup-manager';
 
 export class GameEngine {
   private config: GameConfig;

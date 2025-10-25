@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { LeaderboardAdapter } from '../../shared/redis/leaderboard-adapter.js';
-import { PureLeagueService } from '../payments/pure-league-service.js';
+import { PureLeagueService } from '../payments-disabled/payments/pure-league-service.js';
 import { Leaderboard } from '../../shared/types/game.js';
 
 export interface LeaderboardResponse {
