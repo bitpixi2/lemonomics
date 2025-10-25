@@ -1,28 +1,40 @@
 import React from 'react';
 import { GameResult } from '../../shared/types/game.js';
-import { ProgressUpdate } from '../../server/progress/progress-service.js';
+
+// Define ProgressUpdate locally since we can't import from server in client
+interface ProgressUpdate {
+  isNewBest?: boolean;
+  streakMilestone?: string;
+  streak?: {
+    currentStreak: number;
+  };
+  personalBest?: {
+    bestProfit: number;
+    totalRuns: number;
+  };
+}
 
 interface ResultDisplayProps {
   result: GameResult;
   progress?: ProgressUpdate;
   onPlayAgain: () => void;
   onShare?: () => void;
-  currentDay?: number;
-  maxDays?: number;
-  dayResults?: GameResult[];
-  totalProfit?: number;
+  currentDay: number;
+  maxDays: number;
+  dayResults: GameResult[];
+  totalProfit: number;
 }
 
-export const ResultDisplay: React.FC<ResultDisplayProps> = ({ 
+export const ResultDisplay = ({ 
   result, 
   progress, 
   onPlayAgain, 
   onShare,
-  currentDay = 1,
-  maxDays = 3,
-  dayResults = [],
-  totalProfit = 0
-}) => {
+  currentDay,
+  maxDays,
+  dayResults,
+  totalProfit
+}: ResultDisplayProps) => {
   const isProfitable = result.profit > 0;
   const isNewBest = progress?.isNewBest || false;
   const streakMilestone = progress?.streakMilestone;

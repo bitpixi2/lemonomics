@@ -6,18 +6,18 @@ interface GameUIProps {
   currentCycle?: DailyCycle;
   weeklyFestival?: WeeklyCycle;
   isLoading?: boolean;
-  currentDay?: number;
-  maxDays?: number;
+  currentDay: number;
+  maxDays: number;
 }
 
-export const GameUI: React.FC<GameUIProps> = ({ 
+export const GameUI = ({ 
   onRunGame, 
   currentCycle, 
   weeklyFestival, 
   isLoading = false,
-  currentDay = 1,
-  maxDays = 3
-}) => {
+  currentDay,
+  maxDays
+}: GameUIProps) => {
   const [price, setPrice] = useState(0.50);
   const [adSpend, setAdSpend] = useState(0);
 

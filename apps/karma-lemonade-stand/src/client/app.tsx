@@ -122,7 +122,7 @@ export const App: React.FC = () => {
       // Fallback to mock data for development
       const weatherOptions = [WeatherType.SUNNY, WeatherType.HOT, WeatherType.RAINY];
       const mockCycle: DailyCycle = {
-        date: new Date().toISOString().split('T')[0],
+        date: new Date().toISOString().split('T')[0] as string,
         seed: `day-${gameState.currentDay}`,
         weather: weatherOptions[gameState.currentDay - 1] || WeatherType.SUNNY,
         lemonPrice: 0.5,
@@ -176,7 +176,7 @@ export const App: React.FC = () => {
         },
         powerups: {
           usedToday: {},
-          lastResetDate: new Date().toISOString().split('T')[0]
+          lastResetDate: new Date().toISOString().split('T')[0] as string
         }
       };
 
@@ -292,24 +292,20 @@ export const App: React.FC = () => {
         ...gameState.currentCycle!,
         weather: weatherOptions[nextDay - 1] || WeatherType.SUNNY,
         seed: `day-${nextDay}`,
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toISOString().split('T')[0] as string
       };
 
       setGameState(prev => ({
         ...prev,
         phase: 'playing',
         currentDay: nextDay,
-        currentCycle: updatedCycle,
-        gameResult: undefined,
-        progressUpdate: undefined
+        currentCycle: updatedCycle
       }));
     } else {
       // All days complete, show completion screen
       setGameState(prev => ({
         ...prev,
-        phase: 'complete',
-        gameResult: undefined,
-        progressUpdate: undefined
+        phase: 'complete'
       }));
     }
   };

@@ -12,7 +12,7 @@ interface LeaderboardDisplayProps {
   };
 }
 
-export const LeaderboardDisplay: React.FC<LeaderboardDisplayProps> = ({
+export const LeaderboardDisplay = ({
   dailyLeaderboard,
   weeklyLeaderboard,
   userRank

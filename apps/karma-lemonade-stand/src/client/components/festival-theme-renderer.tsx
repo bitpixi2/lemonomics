@@ -6,10 +6,10 @@ interface FestivalThemeRendererProps {
   children: React.ReactNode;
 }
 
-export const FestivalThemeRenderer: React.FC<FestivalThemeRendererProps> = ({ 
+export const FestivalThemeRenderer = ({ 
   festival, 
   children 
-}) => {
+}: FestivalThemeRendererProps) => {
   const getThemeClass = (festivalName: string): string => {
     // Convert festival name to CSS class
     return `festival-${festivalName.toLowerCase().replace(/\s+/g, '-')}`;
