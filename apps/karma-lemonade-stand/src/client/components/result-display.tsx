@@ -148,13 +148,31 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({
         </div>
       )}
 
+      {/* Multi-Day Progress */}
+      {dayResults && dayResults.length > 0 && (
+        <div className="multi-day-progress">
+          <h3>Progress Summary</h3>
+          <div className="days-completed">
+            {dayResults.map((dayResult, index) => (
+              <div key={index} className={`day-result ${index === currentDay - 1 ? 'current' : ''}`}>
+                <span className="day-label">Day {index + 1}</span>
+                <span className="day-profit">${dayResult.profit.toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
+          <div className="total-so-far">
+            <strong>Total So Far: ${totalProfit?.toFixed(2) || '0.00'}</strong>
+          </div>
+        </div>
+      )}
+
       {/* Action Buttons */}
       <div className="result-actions">
         <button 
           className="play-again-button"
           onClick={onPlayAgain}
         >
-          🍋 Play Again
+          {nextButtonText}
         </button>
         
         {onShare && (

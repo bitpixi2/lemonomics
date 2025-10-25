@@ -10,6 +10,10 @@
     "deploy": "cd apps/karma-lemonade-stand && npm run deploy",
     "launch": "cd apps/karma-lemonade-stand && npm run launch",
     "check": "cd apps/karma-lemonade-stand && npm run check",
+    "type-check": "cd apps/karma-lemonade-stand && npm run type-check",
+    "lint": "cd apps/karma-lemonade-stand && npm run lint",
+    "lint:fix": "cd apps/karma-lemonade-stand && npm run lint:fix",
+    "prettier": "cd apps/karma-lemonade-stand && npm run prettier",
     "test": "cd apps/karma-lemonade-stand && npm run test",
     "login": "devvit login"
   },

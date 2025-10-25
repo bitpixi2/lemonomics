@@ -752,3 +752,239 @@
     padding: 1.5rem;
   }
 }
+
+/* Day Progress Header */
+.day-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.day-header h2 {
+  margin: 0 0 0.5rem 0;
+  color: #2c3e50;
+  font-size: 1.5rem;
+}
+
+.day-progress {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.day-dot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.day-dot.completed {
+  background: #4CAF50;
+  color: white;
+}
+
+.day-dot.current {
+  background: #2196F3;
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(33, 150, 243, 0.5);
+}
+
+.day-dot.upcoming {
+  background: #E0E0E0;
+  color: #666;
+}
+
+/* Multi-Day Progress in Results */
+.multi-day-progress {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.multi-day-progress h3 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+  text-align: center;
+}
+
+.days-completed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.day-result {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  border-radius: 8px;
+  background: #f8f9fa;
+}
+
+.day-result.current {
+  background: #e3f2fd;
+  border: 2px solid #2196F3;
+}
+
+.day-label {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.day-profit {
+  font-weight: bold;
+  color: #4CAF50;
+}
+
+.total-so-far {
+  text-align: center;
+  padding: 1rem;
+  background: #e8f5e8;
+  border-radius: 8px;
+  color: #2c3e50;
+  font-size: 1.1rem;
+}
+
+/* Completion Screen */
+.completion-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  padding: 2rem;
+}
+
+.completion-content {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  border-radius: 20px;
+  padding: 2rem;
+  text-align: center;
+  max-width: 500px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.completion-content h2 {
+  margin: 0 0 1.5rem 0;
+  color: #2c3e50;
+  font-size: 2rem;
+}
+
+.final-summary {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.total-profit {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.total-profit .amount {
+  color: #4CAF50;
+  font-size: 1.5rem;
+}
+
+.daily-breakdown h3 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+}
+
+.day-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.comeback-message {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.comeback-message h3 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+}
+
+.comeback-message p {
+  margin: 0.5rem 0;
+  color: #555;
+}
+
+.completion-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.leaderboard-button, .share-button {
+  background: linear-gradient(45deg, #2196F3, #1976D2);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.leaderboard-button:hover, .share-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .day-progress {
+    gap: 0.25rem;
+  }
+  
+  .day-dot {
+    width: 35px;
+    height: 35px;
+    font-size: 0.8rem;
+  }
+  
+  .completion-content {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+  
+  .completion-actions {
+    flex-direction: column;
+  }
+  
+  .total-profit {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}

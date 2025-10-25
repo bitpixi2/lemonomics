@@ -27,7 +27,7 @@ interface GameState {
   dailyLeaderboard?: Leaderboard;
   weeklyLeaderboard?: Leaderboard;
   isLoading: boolean;
-  error?: string;
+  error: string;
   progressUpdate?: any;
 }
 
@@ -38,7 +38,8 @@ export const App: React.FC = () => {
     maxDays: 3,
     dayResults: [],
     totalProfit: 0,
-    isLoading: false
+    isLoading: false,
+    error: ''
   });
 
   useEffect(() => {
@@ -119,10 +120,11 @@ export const App: React.FC = () => {
       }
 
       // Fallback to mock data for development
+      const weatherOptions = [WeatherType.SUNNY, WeatherType.HOT, WeatherType.RAINY];
       const mockCycle: DailyCycle = {
         date: new Date().toISOString().split('T')[0],
-        seed: 'mock-seed',
-        weather: WeatherType.SUNNY,
+        seed: `day-${gameState.currentDay}`,
+        weather: weatherOptions[gameState.currentDay - 1] || WeatherType.SUNNY,
         lemonPrice: 0.5,
         sugarPrice: 0.3,
         event: MarketEvent.NONE,
@@ -227,8 +229,9 @@ export const App: React.FC = () => {
         console.log('API not available, using mock calculation');
       }
 
-      // Mock game calculation
-      const weather = gameState.currentCycle?.weather || WeatherType.SUNNY;
+      // Generate different weather for each day to make it interesting
+      const weatherOptions = [WeatherType.SUNNY, WeatherType.HOT, WeatherType.RAINY];
+      const weather = weatherOptions[gameState.currentDay - 1] || WeatherType.SUNNY;
       const event = gameState.currentCycle?.event || MarketEvent.NONE;
       
       // Simple demand calculation based on price and weather
@@ -281,11 +284,22 @@ export const App: React.FC = () => {
 
   const handlePlayAgain = () => {
     if (gameState.currentDay < gameState.maxDays) {
-      // Move to next day
+      // Move to next day and update conditions
+      const nextDay = gameState.currentDay + 1;
+      const weatherOptions = [WeatherType.SUNNY, WeatherType.HOT, WeatherType.RAINY];
+      
+      const updatedCycle: DailyCycle = {
+        ...gameState.currentCycle!,
+        weather: weatherOptions[nextDay - 1] || WeatherType.SUNNY,
+        seed: `day-${nextDay}`,
+        date: new Date().toISOString().split('T')[0]
+      };
+
       setGameState(prev => ({
         ...prev,
         phase: 'playing',
-        currentDay: prev.currentDay + 1,
+        currentDay: nextDay,
+        currentCycle: updatedCycle,
         gameResult: undefined,
         progressUpdate: undefined
       }));
@@ -436,6 +450,8 @@ export const App: React.FC = () => {
               currentCycle={gameState.currentCycle}
               weeklyFestival={gameState.weeklyFestival}
               isLoading={gameState.isLoading}
+              currentDay={gameState.currentDay}
+              maxDays={gameState.maxDays}
             />
           )}
 
@@ -444,6 +460,10 @@ export const App: React.FC = () => {
               result={gameState.gameResult}
               onPlayAgain={handlePlayAgain}
               onShare={handleShare}
+              currentDay={gameState.currentDay}
+              maxDays={gameState.maxDays}
+              dayResults={gameState.dayResults}
+              totalProfit={gameState.totalProfit}
             />
           )}
 
@@ -452,6 +472,46 @@ export const App: React.FC = () => {
               dailyLeaderboard={gameState.dailyLeaderboard}
               weeklyLeaderboard={gameState.weeklyLeaderboard}
             />
+          )}
+
+          {gameState.phase === 'complete' && (
+            <div className="completion-screen">
+              <div className="completion-content">
+                <h2>🎉 3-Day Challenge Complete!</h2>
+                <div className="final-summary">
+                  <div className="total-profit">
+                    <span className="label">Total Profit:</span>
+                    <span className="amount">${gameState.totalProfit.toFixed(2)}</span>
+                  </div>
+                  
+                  <div className="daily-breakdown">
+                    <h3>Daily Results:</h3>
+                    {gameState.dayResults.map((result, index) => (
+                      <div key={index} className="day-summary">
+                        <span>Day {index + 1}:</span>
+                        <span>${result.profit.toFixed(2)}</span>
+                        <span>({result.cupsSold} cups)</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="comeback-message">
+                  <h3>🗓️ Come Back Tomorrow!</h3>
+                  <p>Return tomorrow for Day 4 and keep your streak alive!</p>
+                  <p>Your progress has been saved.</p>
+                </div>
+                
+                <div className="completion-actions">
+                  <button onClick={handleShowLeaderboard} className="leaderboard-button">
+                    🏆 View Leaderboards
+                  </button>
+                  <button onClick={handleShare} className="share-button">
+                    📱 Share Results
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </main>
       </div>
