@@ -1,13 +1,26 @@
+import express from 'express';
+import { createServer, getServerPort } from '@devvit/web/server';
 import { APIServer } from './api/server.js';
 
-// Initialize and start the API server
+// Initialize the API server
 const apiServer = new APIServer();
+const app = apiServer.getApp();
 
-// Export the Express app for Devvit integration
-export default apiServer.getApp();
+// Create Devvit server
+const server = createServer(app);
 
-// For development, start the server if this file is run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const port = process.env.PORT ? parseInt(process.env.PORT) : 3001;
-  apiServer.listen(port);
-}
+// Handle server errors
+server.on('error', (err) => {
+  console.error(`🍋 Lemonomics server error: ${err.stack}`);
+});
+
+// Get port from Devvit environment
+const port = getServerPort();
+
+// Start the server
+server.listen(port, () => {
+  console.log(`🍋 Lemonomics API server running on port ${port}`);
+});
+
+// Export the app for Devvit integration
+export default app;

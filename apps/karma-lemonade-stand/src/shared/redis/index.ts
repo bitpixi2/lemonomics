@@ -1,5 +1,4 @@
-// Re-export Redis client and adapters
-export { GameRedisClient } from './client.js';
+// Re-export simplified Redis client and adapters for Lemonomics
+export { LemonomicsRedisClient } from './client.js';
 export { UserProfileAdapter } from './user-profile-adapter.js';
-export { ConfigAdapter } from './config-adapter.js';
 export { LeaderboardAdapter } from './leaderboard-adapter.js';

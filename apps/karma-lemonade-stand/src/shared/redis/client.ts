@@ -1,181 +1,136 @@
-// Redis client wrapper for Devvit
-import type { RedisClient } from '@devvit/web';
+// Simplified Redis client wrapper for Lemonomics
+import { DEFAULT_CONFIG } from '../types/config.js';
 
-export class GameRedisClient {
-  private redis: RedisClient;
+// Simple Redis interface for our needs
+interface SimpleRedisClient {
+  get(key: string): Promise<string | null>;
+  set(key: string, value: string): Promise<void>;
+  del(key: string): Promise<void>;
+  expire(key: string, seconds: number): Promise<void>;
+  exists(key: string): Promise<number>;
+  incr(key: string): Promise<number>;
+}
 
-  constructor(redis: RedisClient) {
+export class LemonomicsRedisClient {
+  private redis: SimpleRedisClient;
+  private keyPrefix: string;
+
+  constructor(redis: SimpleRedisClient) {
     this.redis = redis;
+    this.keyPrefix = DEFAULT_CONFIG.redis.keyPrefix;
   }
 
-  // Configuration keys
-  async getGlobalConfig(): Promise<string | null> {
-    return await this.redis.get('config:global');
+  private getKey(key: string): string {
+    return `${this.keyPrefix}${key}`;
   }
 
-  async setGlobalConfig(config: string): Promise<void> {
-    await this.redis.set('config:global', config);
-  }
-
-  // Cycle management keys
-  async getCurrentDailyCycle(): Promise<string | null> {
-    return await this.redis.get('cycle:today');
-  }
-
-  async setCurrentDailyCycle(cycle: string): Promise<void> {
-    await this.redis.set('cycle:today', cycle);
-  }
-
-  async getCurrentWeeklyCycle(): Promise<string | null> {
-    return await this.redis.get('cycle:week');
-  }
-
-  async setCurrentWeeklyCycle(cycle: string): Promise<void> {
-    await this.redis.set('cycle:week', cycle);
-  }
-
-  // User data keys
+  // User Profile Operations
   async getUserProfile(userId: string): Promise<string | null> {
-    return await this.redis.get(`user:${userId}`);
+    return await this.redis.get(this.getKey(`user:${userId}`));
   }
 
-  async setUserProfile(userId: string, profile: string): Promise<void> {
-    await this.redis.set(`user:${userId}`, profile);
+  async setUserProfile(userId: string, profile: string, ttl?: number): Promise<void> {
+    const key = this.getKey(`user:${userId}`);
+    await this.redis.set(key, profile);
+    if (ttl) {
+      await this.redis.expire(key, ttl);
+    }
   }
 
-  async getUserPowerups(userId: string): Promise<string | null> {
-    return await this.redis.get(`user:${userId}:powerups`);
+  // Game Session Operations
+  async getGameSession(sessionId: string): Promise<string | null> {
+    return await this.redis.get(this.getKey(`session:${sessionId}`));
   }
 
-  async setUserPowerups(userId: string, powerups: string): Promise<void> {
-    await this.redis.set(`user:${userId}:powerups`, powerups);
+  async setGameSession(sessionId: string, session: string, ttl?: number): Promise<void> {
+    const key = this.getKey(`session:${sessionId}`);
+    await this.redis.set(key, session);
+    if (ttl) {
+      await this.redis.expire(key, ttl);
+    }
   }
 
+  async deleteGameSession(sessionId: string): Promise<void> {
+    await this.redis.del(this.getKey(`session:${sessionId}`));
+  }
+
+  // Leaderboard Operations
+  async getLeaderboard(): Promise<string | null> {
+    return await this.redis.get(this.getKey('leaderboard'));
+  }
+
+  async setLeaderboard(leaderboard: string, ttl?: number): Promise<void> {
+    const key = this.getKey('leaderboard');
+    await this.redis.set(key, leaderboard);
+    if (ttl) {
+      await this.redis.expire(key, ttl);
+    }
+  }
+
+  // Streak and Login Bonus Operations
   async getUserStreak(userId: string): Promise<string | null> {
-    return await this.redis.get(`user:${userId}:streak`);
+    return await this.redis.get(this.getKey(`streak:${userId}`));
   }
 
-  async setUserStreak(userId: string, streak: string): Promise<void> {
-    await this.redis.set(`user:${userId}:streak`, streak);
-  }
-
-  async getUserHistory(userId: string): Promise<string | null> {
-    return await this.redis.get(`user:${userId}:history`);
-  }
-
-  async setUserHistory(userId: string, history: string): Promise<void> {
-    await this.redis.set(`user:${userId}:history`, history);
-  }
-
-  // Leaderboard keys
-  async getDailyLeaderboard(): Promise<string | null> {
-    return await this.redis.get('leaderboard:daily');
-  }
-
-  async setDailyLeaderboard(leaderboard: string): Promise<void> {
-    await this.redis.set('leaderboard:daily', leaderboard);
-  }
-
-  async getWeeklyLeaderboard(): Promise<string | null> {
-    return await this.redis.get('leaderboard:weekly');
-  }
-
-  async setWeeklyLeaderboard(leaderboard: string): Promise<void> {
-    await this.redis.set('leaderboard:weekly', leaderboard);
-  }
-
-  async getDailyPureLeaderboard(): Promise<string | null> {
-    return await this.redis.get('leaderboard:daily:pure');
-  }
-
-  async setDailyPureLeaderboard(leaderboard: string): Promise<void> {
-    await this.redis.set('leaderboard:daily:pure', leaderboard);
-  }
-
-  async getWeeklyPureLeaderboard(): Promise<string | null> {
-    return await this.redis.get('leaderboard:weekly:pure');
-  }
-
-  async setWeeklyPureLeaderboard(leaderboard: string): Promise<void> {
-    await this.redis.set('leaderboard:weekly:pure', leaderboard);
-  }
-
-  // Archived leaderboard keys
-  async getArchivedLeaderboard(type: 'daily' | 'weekly', date: string): Promise<string | null> {
-    return await this.redis.get(`leaderboard:archive:${type}:${date}`);
-  }
-
-  async setArchivedLeaderboard(type: 'daily' | 'weekly', date: string, leaderboard: string): Promise<void> {
-    await this.redis.set(`leaderboard:archive:${type}:${date}`, leaderboard);
-  }
-
-  async deleteArchivedLeaderboard(type: 'daily' | 'weekly', date: string): Promise<void> {
-    await this.redis.del(`leaderboard:archive:${type}:${date}`);
-  }
-
-  // Get all archived leaderboard keys for cleanup
-  async getArchivedLeaderboardKeys(_pattern: string): Promise<string[]> {
-    // Note: This would need to be implemented with Redis SCAN in a real implementation
-    // For now, we'll return an empty array as Devvit Redis may not support SCAN
-    return [];
-  }
-
-  // Payment keys
-  async getPaymentReceipt(receiptId: string): Promise<string | null> {
-    return await this.redis.get(`purchases:${receiptId}`);
-  }
-
-  async setPaymentReceipt(receiptId: string, receipt: string): Promise<void> {
-    await this.redis.set(`purchases:${receiptId}`, receipt);
-  }
-
-  // Rate limiting keys
-  async getRateLimitRuns(userId: string): Promise<string | null> {
-    return await this.redis.get(`rate_limit:${userId}:runs`);
-  }
-
-  async setRateLimitRuns(userId: string, count: string, ttl?: number): Promise<void> {
-    await this.redis.set(`rate_limit:${userId}:runs`, count);
+  async setUserStreak(userId: string, streak: string, ttl?: number): Promise<void> {
+    const key = this.getKey(`streak:${userId}`);
+    await this.redis.set(key, streak);
     if (ttl) {
-      await this.redis.expire(`rate_limit:${userId}:runs`, ttl);
+      await this.redis.expire(key, ttl);
     }
   }
 
-  async getRateLimitPurchases(userId: string): Promise<string | null> {
-    return await this.redis.get(`rate_limit:${userId}:purchases`);
+  async getLastLoginBonus(userId: string): Promise<string | null> {
+    return await this.redis.get(this.getKey(`login_bonus:${userId}`));
   }
 
-  async setRateLimitPurchases(userId: string, count: string, ttl?: number): Promise<void> {
-    await this.redis.set(`rate_limit:${userId}:purchases`, count);
-    if (ttl) {
-      await this.redis.expire(`rate_limit:${userId}:purchases`, ttl);
-    }
+  async setLastLoginBonus(userId: string, date: string): Promise<void> {
+    const key = this.getKey(`login_bonus:${userId}`);
+    await this.redis.set(key, date);
+    // Set to expire at end of day (24 hours + buffer)
+    await this.redis.expire(key, 86400 + 3600);
   }
 
-  // Utility methods
+  // Utility Methods
   async increment(key: string): Promise<number> {
-    return await this.redis.incr(key);
-  }
-
-  async expire(key: string, seconds: number): Promise<void> {
-    await this.redis.expire(key, seconds);
-  }
-
-  async delete(key: string): Promise<void> {
-    await this.redis.del(key);
+    return await this.redis.incr(this.getKey(key));
   }
 
   async exists(key: string): Promise<boolean> {
-    const result = await this.redis.exists(key);
+    const result = await this.redis.exists(this.getKey(key));
     return result > 0;
   }
 
-  // Generic get/set methods for cycle management
-  async get(key: string): Promise<string | null> {
-    return await this.redis.get(key);
+  async delete(key: string): Promise<void> {
+    await this.redis.del(this.getKey(key));
   }
 
-  async set(key: string, value: string): Promise<void> {
-    await this.redis.set(key, value);
+  async expire(key: string, seconds: number): Promise<void> {
+    await this.redis.expire(this.getKey(key), seconds);
+  }
+
+  // Generic get/set for custom operations
+  async get(key: string): Promise<string | null> {
+    return await this.redis.get(this.getKey(key));
+  }
+
+  async set(key: string, value: string, ttl?: number): Promise<void> {
+    const fullKey = this.getKey(key);
+    await this.redis.set(fullKey, value);
+    if (ttl) {
+      await this.redis.expire(fullKey, ttl);
+    }
+  }
+
+  // Health check
+  async ping(): Promise<boolean> {
+    try {
+      await this.redis.set(this.getKey('health_check'), 'ok');
+      const result = await this.redis.get(this.getKey('health_check'));
+      await this.redis.del(this.getKey('health_check'));
+      return result === 'ok';
+    } catch (error) {
+      return false;
+    }
   }
 }

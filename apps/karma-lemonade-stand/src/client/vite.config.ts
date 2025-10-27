@@ -12,8 +12,11 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html')
       }
-    }
+    },
+    assetsDir: 'assets',
+    copyPublicDir: true
   },
+  publicDir: '../../public',
   resolve: {
     alias: {
       '@shared': resolve(__dirname, '../shared')

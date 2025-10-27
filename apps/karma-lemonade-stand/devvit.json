@@ -2,7 +2,7 @@
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
   "name": "lemonomics-game",
   "version": "1.0.0",
-  "description": "The Most Addictive Lemonade Stand Game - Turn Your Reddit Karma Into Cash!",
+  "description": "Lemonomics - A Simple Reddit-Integrated Lemonade Stand Game",
   "author": "u/bitpixi",
   "post": {
     "dir": "dist/client",
@@ -17,6 +17,6 @@
     "entry": "index.cjs"
   },
   "media": {
-    "dir": "public/assets"
+    "dir": "public"
   }
 }

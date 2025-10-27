@@ -7,6 +7,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <title>Lemonomics - The Most Addictive Lemonade Stand</title>
   <!-- Favicon removed due to loading issues -->
+  <link rel="stylesheet" href="styles/video.css">
   <style>
     * {
       margin: 0;
@@ -156,6 +157,51 @@
         opacity: 1;
         transform: translateY(0);
       }
+    }
+
+    /* Game interface styles */
+    .app {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .game-screen {
+      background: white;
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      max-width: 600px;
+      width: 90%;
+      border: 4px solid #333;
+      font-family: 'Courier New', monospace;
+    }
+
+    .game-info, .inventory {
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background: #f0f0f0;
+      border-radius: 10px;
+      border: 2px solid #333;
+    }
+
+    .placeholder {
+      text-align: center;
+      padding: 2rem;
+      background: #fffacd;
+      border-radius: 10px;
+      border: 2px dashed #333;
+    }
+
+    .error {
+      color: red;
+      margin-top: 1rem;
+      padding: 0.5rem;
+      background: #ffe6e6;
+      border-radius: 5px;
+      border: 1px solid red;
     }
   </style>
 </head>

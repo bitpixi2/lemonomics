@@ -1,0 +1,777 @@
+/* Video player styles for Lemonomics */
+
+/* CSS Variables for light/dark mode support */
+:root {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+  --overlay-bg: rgba(255, 255, 255, 0.95);
+  --border-color: #eee;
+  --button-bg: #32cd32;
+  --button-hover: #228b22;
+  --error-bg: rgba(255, 0, 0, 0.1);
+  --error-color: #d32f2f;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #000000;
+    --text-color: #ffffff;
+    --overlay-bg: rgba(0, 0, 0, 0.95);
+    --border-color: #333;
+    --button-bg: #32cd32;
+    --button-hover: #228b22;
+    --error-bg: rgba(255, 0, 0, 0.2);
+    --error-color: #ff6b6b;
+  }
+}
+
+.video-player {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.video-element {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.video-element.visible {
+  opacity: 1;
+}
+
+.video-element.hidden {
+  opacity: 0;
+}
+
+.video-player.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.video-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+}
+
+.loading-spinner {
+  font-size: 18px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.video-error {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  text-align: center;
+  padding: 20px;
+}
+
+.video-error button {
+  background: #ff6b35;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin: 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.video-error button:hover {
+  background: #e55a2b;
+}
+
+.error-message {
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.error-details {
+  margin-bottom: 20px;
+  font-size: 12px;
+  opacity: 0.8;
+  font-family: monospace;
+}
+
+.video-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+}
+
+.play-button,
+.pause-button {
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.play-button:hover,
+.pause-button:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.video-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.progress-bar {
+  height: 100%;
+  background: #ffd700;
+  transition: width 0.1s linear;
+}
+
+/* Video overlay UI styles */
+.video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.video-overlay.interactive {
+  pointer-events: auto;
+}
+
+.overlay-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width: 90%;
+}
+
+/* Screen-specific overlays */
+.intro-overlay,
+.ingredient-overlay,
+.customers-overlay,
+.loading-overlay,
+.results-overlay,
+.leaderboard-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.intro-content,
+.ingredient-content,
+.results-content,
+.leaderboard-content {
+  background: var(--overlay-bg);
+  color: var(--text-color);
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  text-align: center;
+}
+
+.intro-content h2 {
+  color: #ff6b35;
+  margin: 10px 0;
+  font-size: 1.8rem;
+}
+
+.weather-info {
+  background: rgba(135, 206, 235, 0.2);
+  padding: 10px;
+  border-radius: 8px;
+  margin: 15px 0;
+  border: 2px solid #87ceeb;
+  font-size: 1.1rem;
+}
+
+.intro-story {
+  margin: 20px 0;
+  line-height: 1.6;
+}
+
+/* Ingredient screen styles */
+.ingredient-selection {
+  margin-top: 20px;
+}
+
+.ingredient-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 10px;
+  background: rgba(240, 240, 240, 0.8);
+  border-radius: 8px;
+}
+
+.ingredient-item label {
+  font-weight: bold;
+  flex: 1;
+}
+
+.ingredient-item input {
+  width: 80px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.cost-summary {
+  background: rgba(255, 215, 0, 0.2);
+  padding: 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+  border: 2px solid #ffd700;
+}
+
+.start-selling-button {
+  background: #32cd32;
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  font-size: 1.1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.3s;
+}
+
+.start-selling-button:hover:not(:disabled) {
+  background: #228b22;
+}
+
+.start-selling-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Results screen styles */
+.results-summary {
+  margin: 20px 0;
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.result-item.profit {
+  font-weight: bold;
+  color: #32cd32;
+  font-size: 1.1rem;
+}
+
+.result-item.total {
+  font-weight: bold;
+  font-size: 1.2rem;
+  border-top: 2px solid #ffd700;
+  border-bottom: 2px solid #ffd700;
+  margin-top: 10px;
+  padding: 12px 0;
+}
+
+.customer-feedback {
+  background: rgba(240, 248, 255, 0.8);
+  padding: 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+}
+
+.customer-comment {
+  font-style: italic;
+  margin: 5px 0;
+  color: #555;
+}
+
+.results-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.next-day-button,
+.restart-button,
+.save-post-button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s;
+}
+
+.next-day-button {
+  background: #32cd32;
+  color: white;
+}
+
+.restart-button {
+  background: #ff6b35;
+  color: white;
+}
+
+.save-post-button {
+  background: #4169e1;
+  color: white;
+}
+
+.next-day-button:hover {
+  background: #228b22;
+}
+
+.restart-button:hover {
+  background: #e55a2b;
+}
+
+.save-post-button:hover {
+  background: #1e4db8;
+}
+
+/* Leaderboard screen styles */
+.final-stats {
+  background: rgba(255, 215, 0, 0.2);
+  padding: 20px;
+  border-radius: 10px;
+  margin: 20px 0;
+  border: 2px solid #ffd700;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 1.1rem;
+}
+
+.leaderboard {
+  margin: 20px 0;
+}
+
+.leaderboard-list {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.leaderboard-entry {
+  display: grid;
+  grid-template-columns: 50px 1fr 100px 80px;
+  gap: 10px;
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  align-items: center;
+}
+
+.leaderboard-entry.current-player {
+  background: rgba(255, 215, 0, 0.3);
+  font-weight: bold;
+}
+
+.leaderboard-entry:last-child {
+  border-bottom: none;
+}
+
+.rank {
+  font-weight: bold;
+  color: #666;
+}
+
+.username {
+  font-weight: bold;
+}
+
+.cash {
+  color: #32cd32;
+  font-weight: bold;
+}
+
+.days {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.play-again-button {
+  background: linear-gradient(45deg, #32cd32, #228b22);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  border-radius: 10px;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.3s;
+}
+
+.play-again-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(50, 205, 50, 0.4);
+}
+
+/* Loading and selling message styles */
+.selling-message,
+.loading-message {
+  text-align: center;
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.loading-spinner {
+  font-size: 3rem;
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.error-message {
+  background: var(--error-bg);
+  color: var(--error-color);
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid var(--error-color);
+  margin: 10px 0;
+  text-align: center;
+}
+
+/* Intro screen styles */
+.intro-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  padding: 20px;
+}
+
+.intro-screen h1 {
+  font-size: 3rem;
+  color: #333;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.intro-screen p {
+  font-size: 1.2rem;
+  color: #666;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.start-game-button {
+  background: #ff6b35;
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+}
+
+.start-game-button:hover {
+  background: #e55a2b;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+}
+
+.start-game-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Video container styles */
+.video-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.intro-video,
+.ingredients-video {
+  width: 100%;
+  height: 100%;
+}
+
+/* Wide format video handling - different behavior for desktop vs mobile */
+.video-element {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Desktop: Full screen videos */
+@media (min-width: 769px) {
+  .video-element {
+    object-fit: cover; /* Fill entire screen */
+  }
+  
+  .video-container {
+    width: 100vw;
+    height: 100vh;
+  }
+}
+
+/* Mobile: Centered videos with left/right cropping, empty space top/bottom */
+@media (max-width: 768px) {
+  .video-element {
+    object-fit: cover; /* Crop left/right, maintain aspect ratio */
+    object-position: center;
+    width: 100%;
+    height: auto; /* Let height be determined by aspect ratio */
+    max-height: 70vh; /* Limit height to create empty space top/bottom */
+  }
+  
+  .video-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center; /* Center video vertically */
+    justify-content: center;
+    background: #000; /* Black background for empty space */
+  }
+  
+  .video-player {
+    width: 100%;
+    height: auto;
+    max-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Loading states */
+.app .loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-size: 1.5rem;
+  color: #333;
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .intro-screen h1 {
+    font-size: 2rem;
+  }
+
+  .overlay-content {
+    width: 95%;
+    padding: 15px;
+  }
+
+  .video-controls {
+    bottom: 10px;
+  }
+
+  .video-player {
+    border-radius: 0; /* Remove border radius on mobile for full screen */
+  }
+
+  .play-button,
+  .pause-button {
+    padding: 15px 20px; /* Larger touch targets on mobile */
+    font-size: 16px;
+  }
+
+  /* Ensure wide videos are centered and cropped on mobile */
+  .video-element {
+    object-fit: cover;
+    object-position: center;
+  }
+
+  /* Override previous mobile video container settings */
+  .video-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative; /* Not fixed, to allow normal flow */
+    top: auto;
+    left: auto;
+    z-index: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+  }
+}
+/* Audio Control Styles */
+.audio-control {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.audio-control:hover {
+  background: rgba(0, 0, 0, 0.9);
+  transform: scale(1.1);
+}
+
+.audio-control:active {
+  transform: scale(0.95);
+}
+
+.audio-control svg {
+  width: 24px;
+  height: 24px;
+  transition: opacity 0.2s ease;
+}
+
+/* Mobile adjustments for audio control */
+@media (max-width: 768px) {
+  .audio-control {
+    top: 15px;
+    right: 15px;
+    width: 44px;
+    height: 44px;
+  }
+  
+  .audio-control svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Touch optimization for mobile */
+@media (max-width: 768px) {
+  /* Larger touch targets */
+  .ingredient-item input {
+    min-height: 44px;
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+  
+  .start-selling-button,
+  .next-day-button,
+  .restart-button,
+  .save-post-button,
+  .play-again-button {
+    min-height: 44px;
+    font-size: 16px;
+    padding: 12px 20px;
+  }
+  
+  /* Better spacing for touch */
+  .results-actions {
+    gap: 15px;
+    margin-top: 25px;
+  }
+  
+  .ingredient-item {
+    margin-bottom: 20px;
+    padding: 15px;
+  }
+  
+  /* Prevent text selection on interactive elements */
+  .audio-control,
+  .start-selling-button,
+  .next-day-button,
+  .restart-button,
+  .save-post-button,
+  .play-again-button {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}

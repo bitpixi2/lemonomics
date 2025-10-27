@@ -1,580 +1,294 @@
 import React, { useState, useEffect } from 'react';
-import { GameUI } from './components/game-ui.js';
-import { FestivalThemeRenderer } from './components/festival-theme-renderer.js';
-import { ResultDisplay } from './components/result-display.js';
-import { LeaderboardDisplay } from './components/leaderboard-display.js';
-import { audioManager } from './services/audio-manager.js';
 import { 
-  GameResult, 
-  DailyCycle, 
-  WeeklyCycle, 
-  Leaderboard,
-  UserProfile,
-  WeatherType,
-  MarketEvent
+  GameState,
+  WeatherType
 } from '../shared/types/game.js';
+import { VideoPlayer } from './components/VideoPlayer.js';
+import { VideoPreloader } from './utils/videoPreloader.js';
+import { VideoSequencer, GamePhase } from './utils/videoSequencer.js';
+import { GameAudio } from './utils/gameAudio.js';
+import { AudioControl } from './components/AudioControl.js';
+// VIDEO_ASSETS imported in video components
 
-interface GameState {
-  phase: 'splash' | 'loading' | 'playing' | 'results' | 'leaderboard' | 'complete';
-  currentDay: number;
-  maxDays: number;
-  dayResults: GameResult[];
-  totalProfit: number;
-  currentCycle?: DailyCycle;
-  weeklyFestival?: WeeklyCycle;
-  userProfile?: UserProfile;
-  gameResult?: GameResult;
-  dailyLeaderboard?: Leaderboard;
-  weeklyLeaderboard?: Leaderboard;
+interface AppState {
+  phase: GamePhase;
+  gameState?: GameState;
   isLoading: boolean;
-  error: string;
-  progressUpdate?: any;
+  error?: string;
+  videoPreloader?: VideoPreloader;
+  videoSequencer?: VideoSequencer;
+  gameAudio?: GameAudio;
 }
 
 export const App: React.FC = () => {
-  const [gameState, setGameState] = useState<GameState>({
-    phase: 'splash',
-    currentDay: 1,
-    maxDays: 3,
-    dayResults: [],
-    totalProfit: 0,
-    isLoading: false,
-    error: ''
+  const [appState, setAppState] = useState<AppState>({
+    phase: 'intro',
+    isLoading: true
   });
 
+  // Generate random weather
+  const generateRandomWeather = (): WeatherType => {
+    const weatherTypes = [WeatherType.SUNNY, WeatherType.WINDY, WeatherType.RAINY];
+    const weights = [0.5, 0.3, 0.2]; // 50% sunny, 30% windy, 20% rainy
+    
+    const random = Math.random();
+    let cumulative = 0;
+    
+    for (let i = 0; i < weatherTypes.length; i++) {
+      cumulative += weights[i] || 0;
+      if (random <= cumulative) {
+        return weatherTypes[i] || WeatherType.SUNNY;
+      }
+    }
+    
+    return WeatherType.SUNNY; // Fallback
+  };
+
+  // Initialize video and audio systems
   useEffect(() => {
-    // Only initialize audio on startup, don't auto-load game data
-    initializeAudio();
-    
-    // Set up splash screen button handler
-    const startButton = document.getElementById('start-button');
-    if (startButton) {
-      startButton.addEventListener('click', handleStartGame);
-    }
-    
-    return () => {
-      if (startButton) {
-        startButton.removeEventListener('click', handleStartGame);
-      }
-    };
-  }, []);
-
-  const handleStartGame = () => {
-    // Hide splash screen and show game
-    const splash = document.getElementById('splash');
-    const gameContainer = document.getElementById('game');
-    
-    if (splash) splash.style.display = 'none';
-    if (gameContainer) gameContainer.style.display = 'block';
-    
-    // Start loading the game
-    setGameState(prev => ({ ...prev, phase: 'loading' }));
-    initializeGame();
-  };
-
-  const initializeAudio = async () => {
-    try {
-      // Initialize audio system
-      await audioManager.initialize();
-      
-      // Preload game sounds
-      await audioManager.preloadGameSounds();
-      
-      // Play the lemonade pour sound as a welcome
-      setTimeout(() => {
-        audioManager.playSound('lemonade-pour', 0.6);
-      }, 500);
-      
-    } catch (error) {
-      console.log('Audio initialization failed (this is normal if no audio files are present):', error);
-    }
-  };
-
-  const initializeGame = async () => {
-    try {
-      setGameState(prev => ({ ...prev, isLoading: true, error: '' }));
-
-      // Try to load initial game data, but fallback to mock data if it fails
+    const initializeVideoSystems = async () => {
       try {
-        const [cycleResponse, profileResponse] = await Promise.all([
-          fetch('/api/current-cycle'),
-          fetch('/api/profile')
-        ]);
-
-        const cycleData = await cycleResponse.json();
-        const profileData = await profileResponse.json();
-
-        if (cycleData.success && profileData.success) {
-          setGameState(prev => ({
-            ...prev,
-            phase: 'playing',
-            currentCycle: cycleData.daily,
-            weeklyFestival: cycleData.weekly,
-            userProfile: profileData.profile,
-            isLoading: false
-          }));
-          return;
-        }
-      } catch (apiError) {
-        console.log('API not available, using mock data');
-      }
-
-      // Fallback to mock data for development
-      const weatherOptions = [WeatherType.SUNNY, WeatherType.HOT, WeatherType.RAINY];
-      const mockCycle: DailyCycle = {
-        date: new Date().toISOString().split('T')[0] as string,
-        seed: `day-${gameState.currentDay}`,
-        weather: weatherOptions[gameState.currentDay - 1] || WeatherType.SUNNY,
-        lemonPrice: 0.5,
-        sugarPrice: 0.3,
-        event: MarketEvent.NONE,
-        multipliers: {
-          demand: {
-            [WeatherType.SUNNY]: 1.2,
-            [WeatherType.HOT]: 1.5,
-            [WeatherType.CLOUDY]: 1.0,
-            [WeatherType.RAINY]: 0.5,
-            [WeatherType.COLD]: 0.3
-          },
-          event: {
-            [MarketEvent.NONE]: 1.0,
-            [MarketEvent.VIRAL]: 2.0,
-            [MarketEvent.SUGAR_SHORT]: 1.0,
-            [MarketEvent.INFLATION]: 1.0
-          },
-          cost: {
-            [MarketEvent.NONE]: 1.0,
-            [MarketEvent.VIRAL]: 1.0,
-            [MarketEvent.SUGAR_SHORT]: 1.5,
-            [MarketEvent.INFLATION]: 1.3
-          }
-        },
-        loginBonus: 'NONE' as any
-      };
-
-      const mockProfile: UserProfile = {
-        userId: 'mock-user',
-        username: 'TestUser',
-        redditStats: {
-          postKarma: 100,
-          commentKarma: 200,
-          accountAgeDays: 365,
-          awards: 5,
-          lastUpdated: new Date()
-        },
-        gameStats: {
-          service: 1,
-          marketing: 1,
-          reputation: 1
-        },
-        progress: {
-          totalRuns: 0,
-          currentStreak: 0,
-          longestStreak: 0,
-          bestProfit: 0,
-          totalProfit: 0
-        },
-        powerups: {
-          usedToday: {},
-          lastResetDate: new Date().toISOString().split('T')[0] as string
-        }
-      };
-
-      setGameState(prev => ({
-        ...prev,
-        phase: 'playing',
-        currentCycle: mockCycle,
-        userProfile: mockProfile,
-        isLoading: false
-      }));
-
-    } catch (error) {
-      console.error('Failed to initialize game:', error);
-      setGameState(prev => ({
-        ...prev,
-        error: 'Failed to load game. Please refresh and try again.',
-        isLoading: false
-      }));
-    }
-  };
-
-  const handleRunGame = async (price: number, adSpend: number, standData?: any) => {
-    try {
-      setGameState(prev => ({ ...prev, isLoading: true }));
-
-      // Try API first, fallback to mock calculation
-      try {
-        const response = await fetch('/api/run-game', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ price, adSpend })
+        const preloader = new VideoPreloader({ 
+          preloadStrategy: 'intro',
+          muted: false // Allow sound for better experience
         });
-
-        const data = await response.json();
-
-        if (data.success) {
-          setGameState(prev => ({
-            ...prev,
-            phase: 'results',
-            gameResult: data.result,
-            progressUpdate: data.progress,
-            userProfile: data.updatedProfile,
-            isLoading: false
-          }));
-          return;
-        }
-      } catch (apiError) {
-        console.log('API not available, using mock calculation');
-      }
-
-      // Classic Lemonade Stand Logic
-      const weather = gameState.currentCycle?.weather || WeatherType.SUNNY;
-      const event = gameState.currentCycle?.event || MarketEvent.NONE;
-      
-      if (standData) {
-        // Use classic lemonade stand calculation
-        const { glasses, signs, priceInCents, totalCost } = standData;
+        const sequencer = new VideoSequencer();
         
-        // Calculate demand based on classic BASIC game logic
-        const optimalPrice = 10; // 10 cents is optimal
-        const baseCustomers = 30;
+        // Initialize audio system
+        const gameAudio = new GameAudio();
         
-        let demandMultiplier;
-        if (priceInCents >= optimalPrice) {
-          // Higher prices reduce demand exponentially
-          demandMultiplier = (optimalPrice * optimalPrice) * baseCustomers / (priceInCents * priceInCents);
-        } else {
-          // Lower prices increase demand linearly
-          demandMultiplier = (optimalPrice - priceInCents) / optimalPrice * 0.8 * baseCustomers + baseCustomers;
-        }
+        // Preload game audio assets
+        gameAudio.preloadGameAudio();
         
-        // Weather effects
-        let weatherMultiplier = 1.0;
-        if (weather === WeatherType.SUNNY) weatherMultiplier = 1.2;
-        if (weather === WeatherType.HOT) weatherMultiplier = 1.5;
-        if (weather === WeatherType.RAINY) weatherMultiplier = 0.5;
-        if (weather === WeatherType.COLD) weatherMultiplier = 0.3;
+        console.log('Initializing video systems...');
         
-        // Advertising effect (diminishing returns)
-        const adEffect = -signs * 0.5;
-        const adMultiplier = 1 - (Math.exp(adEffect) * 1);
+        // Preload intro videos
+        await preloader.preloadVideos();
         
-        // Calculate final demand
-        let totalDemand = weatherMultiplier * (demandMultiplier + (demandMultiplier * adMultiplier));
-        totalDemand = Math.floor(Math.max(0, totalDemand));
+        console.log('Video preloading complete. Preload status:', preloader.getPreloadStatus());
         
-        // Can't sell more than you made
-        const glassesSold = Math.min(totalDemand, glasses);
+        // Generate random weather for intro
+        const introWeather = generateRandomWeather();
         
-        // Calculate financials
-        const revenue = glassesSold * (priceInCents / 100);
-        const profit = revenue - totalCost;
+        // Start intro sequence
+        const introSequence = sequencer.createIntroSequence(introWeather);
+        sequencer.startSequence(introSequence);
         
-        const mockResult: GameResult = {
-          profit: Math.round(profit * 100) / 100,
-          cupsSold: glassesSold,
-          weather,
-          event,
-          festival: 'default',
-          streak: gameState.currentDay,
-          seed: `day-${gameState.currentDay}`,
-          powerupsApplied: []
-        };
+        // Start background music
+        gameAudio.playPhaseMusic('intro');
         
-        const newDayResults = [...gameState.dayResults, mockResult];
-        const newTotalProfit = gameState.totalProfit + mockResult.profit;
-
-        setGameState(prev => ({
+        setAppState(prev => ({
           ...prev,
-          phase: 'results',
-          gameResult: mockResult,
-          dayResults: newDayResults,
-          totalProfit: newTotalProfit,
+          videoPreloader: preloader,
+          videoSequencer: sequencer,
+          gameAudio: gameAudio,
           isLoading: false
         }));
-        
-        return;
+      } catch (error) {
+        console.error('Failed to initialize video systems:', error);
+        setAppState(prev => ({
+          ...prev,
+          error: `Failed to load video assets: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          isLoading: false
+        }));
       }
-      
-      // Fallback simple calculation if no standData
-      let baseDemand = 100;
-      if (weather === WeatherType.SUNNY) baseDemand *= 1.2;
-      if (weather === WeatherType.HOT) baseDemand *= 1.5;
-      if (weather === WeatherType.RAINY) baseDemand *= 0.5;
-      if (price > 2) baseDemand *= 0.7;
-      if (price < 1) baseDemand *= 1.3;
-      
-      const adBoost = Math.min(adSpend / 10, 2);
-      const finalDemand = Math.floor(baseDemand * (1 + adBoost));
-      
-      const revenue = finalDemand * price;
-      const costs = finalDemand * 0.3 + adSpend;
-      const profit = revenue - costs;
+    };
 
-      const mockResult: GameResult = {
-        profit: Math.round(profit * 100) / 100,
-        cupsSold: finalDemand,
-        weather,
-        event,
-        festival: 'default',
-        streak: gameState.userProfile?.progress.currentStreak || 0,
-        seed: 'mock-seed',
-        powerupsApplied: []
-      };
+    initializeVideoSystems();
+  }, []);
 
-      const newDayResults = [...gameState.dayResults, mockResult];
-      const newTotalProfit = gameState.totalProfit + mockResult.profit;
-
-      setGameState(prev => ({
-        ...prev,
-        phase: 'results',
-        gameResult: mockResult,
-        dayResults: newDayResults,
-        totalProfit: newTotalProfit,
-        isLoading: false
-      }));
-
-    } catch (error) {
-      console.error('Failed to run game:', error);
-      setGameState(prev => ({
-        ...prev,
-        error: 'Failed to run your lemonade stand. Please try again.',
-        isLoading: false
-      }));
-    }
-  };
-
-  const handlePlayAgain = () => {
-    if (gameState.currentDay < gameState.maxDays) {
-      // Move to next day and update conditions
-      const nextDay = gameState.currentDay + 1;
-      const weatherOptions = [WeatherType.SUNNY, WeatherType.HOT, WeatherType.RAINY];
-      
-      const updatedCycle: DailyCycle = {
-        ...gameState.currentCycle!,
-        weather: weatherOptions[nextDay - 1] || WeatherType.SUNNY,
-        seed: `day-${nextDay}`,
-        date: new Date().toISOString().split('T')[0] as string
-      };
-
-      setGameState(prev => ({
-        ...prev,
-        phase: 'playing',
-        currentDay: nextDay,
-        currentCycle: updatedCycle
-      }));
-    } else {
-      // All days complete, show completion screen
-      setGameState(prev => ({
-        ...prev,
-        phase: 'complete'
-      }));
-    }
-  };
-
-  const handleShowLeaderboard = async () => {
-    try {
-      setGameState(prev => ({ ...prev, isLoading: true }));
-
-      const response = await fetch('/api/leaderboards');
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error('Failed to load leaderboards');
+  const handleIntroVideoEnd = () => {
+    console.log('Intro video ended');
+    if (appState.videoSequencer?.shouldAutoAdvance()) {
+      // Move to next step or show start button
+      const nextStep = appState.videoSequencer.nextStep();
+      if (!nextStep) {
+        // Sequence complete, show start game button
+        setAppState(prev => ({ ...prev, phase: 'intro' }));
       }
-
-      setGameState(prev => ({
-        ...prev,
-        phase: 'leaderboard',
-        dailyLeaderboard: data.daily,
-        weeklyLeaderboard: data.weekly,
-        isLoading: false
-      }));
-
-    } catch (error) {
-      console.error('Failed to load leaderboards:', error);
-      setGameState(prev => ({
-        ...prev,
-        error: 'Failed to load leaderboards.',
-        isLoading: false
-      }));
     }
   };
 
-  const handleBackToGame = () => {
-    setGameState(prev => ({
+  const handleVideoError = (error: Error) => {
+    console.error('Video playback error:', error);
+    setAppState(prev => ({
       ...prev,
-      phase: 'playing'
+      error: `Video playback failed: ${error.message}`
     }));
   };
 
-  const handleShare = async () => {
-    if (!gameState.gameResult) return;
-
+  const handleStartGame = async () => {
+    if (!appState.videoSequencer || !appState.videoPreloader) return;
+    
+    setAppState(prev => ({ ...prev, isLoading: true }));
+    
     try {
-      const response = await fetch('/api/share-result', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
+      // Preload weather-specific videos for better experience
+      await appState.videoPreloader.preloadWeatherVideos(WeatherType.SUNNY);
+      
+      // Initialize a basic game state
+      const initialGameState: GameState = {
+        day: 1,
+        cash: 10.00,
+        inventory: {
+          lemons: 0,
+          sugar: 2, // Free sugar from mom
+          cups: 0
         },
-        body: JSON.stringify({ 
-          result: gameState.gameResult,
-          progress: gameState.progressUpdate 
-        })
-      });
+        weather: WeatherType.SUNNY,
+        festival: 'summer' as any, // Will be properly typed in future tasks
+        karmaBoost: { multiplier: 1.0, level: 'none', description: 'No bonus', threshold: 0 },
+        isFirstDay: true
+      };
 
-      const data = await response.json();
-
-      if (data.success) {
-        // Show success message or redirect to shared post
-        console.log('Result shared successfully!');
+      // Generate weather for the day
+      const dayWeather = generateRandomWeather();
+      
+      // Start ingredients phase (ingredients video with selection overlay)
+      const daySequence = appState.videoSequencer.createDaySequence(dayWeather);
+      appState.videoSequencer.startSequence(daySequence);
+      
+      // Update game state with the day's weather
+      const gameStateWithWeather = { ...initialGameState, weather: dayWeather };
+      
+      setAppState(prev => ({ 
+        ...prev, 
+        gameState: gameStateWithWeather,
+        phase: 'ingredients',
+        isLoading: false 
+      }));
+      
+      // Continue background music for ingredients phase
+      if (appState.gameAudio) {
+        appState.gameAudio.playPhaseMusic('ingredients');
       }
-
     } catch (error) {
-      console.error('Failed to share result:', error);
+      console.error('Failed to start game:', error);
+      setAppState(prev => ({
+        ...prev,
+        error: `Failed to start game: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        isLoading: false
+      }));
     }
   };
 
-  if (gameState.error) {
+  // Show loading screen while initializing
+  if (appState.isLoading) {
     return (
-      <div className="error-screen">
-        <div className="error-content">
-          <div className="error-icon">❌</div>
-          <h2>Oops! Something went wrong</h2>
-          <p>{gameState.error}</p>
-          <button onClick={initializeGame} className="retry-button">
-            🔄 Try Again
+      <div className="app">
+        <div className="loading">🍋 Loading Lemonomics...</div>
+        <AudioControl className="audio-control-loading" />
+      </div>
+    );
+  }
+
+  // Show error if video systems failed to initialize
+  if (appState.error) {
+    return (
+      <div className="app">
+        <div className="video-error">
+          <div className="error-message">{appState.error}</div>
+          <button onClick={() => window.location.reload()}>
+            Reload Game
           </button>
         </div>
+        <AudioControl className="audio-control-error" />
       </div>
     );
   }
 
-  if (gameState.isLoading && gameState.phase === 'loading') {
+  // Intro phase - show ghost intro video
+  if (appState.phase === 'intro' && appState.videoPreloader) {
+    const currentStep = appState.videoSequencer?.getCurrentStep();
+    
     return (
-      <div className="loading-screen">
-        <div className="loading-content">
-          <div className="loading-icon">🍋</div>
-          <h2>Loading Karma Lemonade Stand...</h2>
-          <div className="loading-spinner"></div>
+      <div className="app">
+        <AudioControl className="audio-control-intro" />
+        <div className="intro-screen">
+          {currentStep ? (
+            <VideoPlayer
+              videoAsset={currentStep.video}
+              preloader={appState.videoPreloader}
+              onVideoEnd={handleIntroVideoEnd}
+              onVideoError={handleVideoError}
+              className="intro-video"
+              autoplay={true}
+              controls={false}
+              muted={false}
+              fadeIn={true}
+            />
+          ) : (
+            <>
+              <h1>🍋 Lemonomics</h1>
+              <p>A Simple Reddit-Integrated Lemonade Stand Game</p>
+              <div className="intro-story">
+                <p>Welcome to the classic lemonade stand game!</p>
+                <p>Your mom gives you $10 to get started.</p>
+                <p>She also gives you 2 cups of sugar for free to help you begin.</p>
+                <p>Can you build a successful lemonade business?</p>
+              </div>
+              <button 
+                onClick={handleStartGame} 
+                className="start-game-button"
+                disabled={appState.isLoading}
+              >
+                {appState.isLoading ? 'Starting...' : 'Start Game'}
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
   }
 
-  const festivalWrapper = gameState.weeklyFestival ? (
-    <FestivalThemeRenderer festival={gameState.weeklyFestival}>
-      {renderGameContent()}
-    </FestivalThemeRenderer>
-  ) : (
-    <div className="default-theme">
-      {renderGameContent()}
-    </div>
-  );
-
-  return (
-    <div className="app">
-      {festivalWrapper}
-    </div>
-  );
-
-  function renderGameContent() {
+  // Ingredients phase - show ingredients video with selection overlay
+  if (appState.phase === 'ingredients' && appState.gameState && appState.videoPreloader) {
+    const currentStep = appState.videoSequencer?.getCurrentStep();
+    
     return (
-      <div className="game-container">
-        <header className="game-header">
-          <h1>🍋 Karma Lemonade Stand</h1>
-          <p>Turn your Reddit karma into sweet profits!</p>
+      <div className="app">
+        <AudioControl className="audio-control-ingredients" />
+        <div className="video-container">
+          {currentStep && (
+            <VideoPlayer
+              videoAsset={currentStep.video}
+              preloader={appState.videoPreloader}
+              onVideoError={handleVideoError}
+              className="ingredients-video"
+              autoplay={true}
+              controls={false}
+              muted={false}
+              loop={currentStep.loop || false}
+              fadeIn={currentStep.fadeTransition || false}
+            />
+          )}
           
-          <nav className="game-nav">
-            <button 
-              onClick={handleBackToGame}
-              className={gameState.phase === 'playing' ? 'active' : ''}
-            >
-              🎮 Play
-            </button>
-            <button 
-              onClick={handleShowLeaderboard}
-              className={gameState.phase === 'leaderboard' ? 'active' : ''}
-            >
-              🏆 Leaderboards
-            </button>
-          </nav>
-        </header>
-
-        <main className="game-main">
-          {gameState.phase === 'playing' && (
-            <GameUI
-              onRunGame={handleRunGame}
-              currentCycle={gameState.currentCycle}
-              weeklyFestival={gameState.weeklyFestival}
-              isLoading={gameState.isLoading}
-              currentDay={gameState.currentDay}
-              maxDays={gameState.maxDays}
-            />
-          )}
-
-          {gameState.phase === 'results' && gameState.gameResult && (
-            <ResultDisplay
-              result={gameState.gameResult}
-              onPlayAgain={handlePlayAgain}
-              onShare={handleShare}
-              currentDay={gameState.currentDay}
-              maxDays={gameState.maxDays}
-              dayResults={gameState.dayResults}
-              totalProfit={gameState.totalProfit}
-            />
-          )}
-
-          {gameState.phase === 'leaderboard' && (
-            <LeaderboardDisplay
-              dailyLeaderboard={gameState.dailyLeaderboard}
-              weeklyLeaderboard={gameState.weeklyLeaderboard}
-            />
-          )}
-
-          {gameState.phase === 'complete' && (
-            <div className="completion-screen">
-              <div className="completion-content">
-                <h2>🎉 3-Day Challenge Complete!</h2>
-                <div className="final-summary">
-                  <div className="total-profit">
-                    <span className="label">Total Profit:</span>
-                    <span className="amount">${gameState.totalProfit.toFixed(2)}</span>
-                  </div>
-                  
-                  <div className="daily-breakdown">
-                    <h3>Daily Results:</h3>
-                    {gameState.dayResults.map((result, index) => (
-                      <div key={index} className="day-summary">
-                        <span>Day {index + 1}:</span>
-                        <span>${result.profit.toFixed(2)}</span>
-                        <span>({result.cupsSold} cups)</span>
-                      </div>
-                    ))}
-                  </div>
+          {currentStep?.showUI && (
+            <div className="video-overlay interactive">
+              <div className="overlay-content">
+                <h2>Day {appState.gameState.day} - Plan Your Ingredients</h2>
+                <div className="game-info">
+                  <p>Cash: ${appState.gameState.cash.toFixed(2)}</p>
+                  <p>Weather: {appState.gameState.weather}</p>
                 </div>
-                
-                <div className="comeback-message">
-                  <h3>🗓️ Come Back Tomorrow!</h3>
-                  <p>Return tomorrow for Day 4 and keep your streak alive!</p>
-                  <p>Your progress has been saved.</p>
-                </div>
-                
-                <div className="completion-actions">
-                  <button onClick={handleShowLeaderboard} className="leaderboard-button">
-                    🏆 View Leaderboards
-                  </button>
-                  <button onClick={handleShare} className="share-button">
-                    📱 Share Results
+                <div className="ingredient-selection">
+                  <p>Ingredient selection interface will be implemented in future tasks...</p>
+                  <button onClick={() => setAppState(prev => ({ ...prev, phase: 'intro' }))}>
+                    Back to Intro
                   </button>
                 </div>
               </div>
             </div>
           )}
-        </main>
+        </div>
       </div>
     );
   }
+
+  // Default fallback
+  return (
+    <div className="app">
+      <div className="loading">Loading game phase...</div>
+    </div>
+  );
 };

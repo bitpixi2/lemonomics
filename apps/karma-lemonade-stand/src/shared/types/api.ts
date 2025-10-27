@@ -1,55 +1,85 @@
-// API request/response types
-import type { GameResult, UserProfile, Leaderboard, DailyCycle, WeeklyCycle } from './game.js';
+// API request/response types for Lemonomics
+import type { 
+  GameState, 
+  DayResult, 
+  UserProfile, 
+  LeaderboardEntry, 
+  DialogueResponse,
+  GameSession,
+  LoginBonus,
+  DayInput,
+  GameEndResult
+} from './game.js';
 
 // API Request types
-export interface ScoreRunRequest {
-  price: number;
-  adSpend: number;
-  powerupReceipts?: string[]; // Receipt IDs
+export interface StartGameRequest {
+  // No parameters needed - uses Reddit user context from Devvit
 }
 
-export interface PurchasePowerupRequest {
-  sku: string;
-  receiptId: string;
+export interface PlayDayRequest extends DayInput {
+  sessionId: string;
+}
+
+export interface EndGameRequest {
+  sessionId: string;
+}
+
+export interface ClaimLoginBonusRequest {
+  // No parameters needed - uses Reddit user context
+}
+
+export interface GetAIContentRequest {
+  weather: string;
+  festival: string;
+  salesPerformance: 'good' | 'average' | 'poor';
+  day: number;
 }
 
 // API Response types
-export interface ScoreRunResponse {
+export interface ApiResponse<T = any> {
   success: boolean;
-  result?: GameResult;
+  data?: T;
   error?: string;
+  timestamp: string;
 }
 
-export interface ProfileResponse {
-  success: boolean;
-  profile?: UserProfile;
-  error?: string;
-}
+export interface StartGameResponse extends ApiResponse<{
+  gameSession: GameSession;
+  userProfile: UserProfile;
+  loginBonus?: LoginBonus;
+}> {}
 
-export interface LeaderboardResponse {
-  success: boolean;
-  leaderboard?: Leaderboard;
-  error?: string;
-}
+export interface PlayDayResponse extends ApiResponse<{
+  dayResult: DayResult;
+  updatedGameState: GameState;
+  aiContent?: DialogueResponse;
+}> {}
 
-export interface CurrentCycleResponse {
-  success: boolean;
-  daily?: DailyCycle;
-  weekly?: WeeklyCycle;
-  error?: string;
-}
+export interface EndGameResponse extends ApiResponse<GameEndResult> {}
 
-export interface PurchaseResponse {
-  success: boolean;
-  powerupApplied?: boolean;
-  error?: string;
-}
+export interface UserProfileResponse extends ApiResponse<UserProfile> {}
 
+export interface LeaderboardResponse extends ApiResponse<{
+  leaderboard: LeaderboardEntry[];
+  playerPosition?: number;
+  totalPlayers: number;
+}> {}
+
+export interface LoginBonusResponse extends ApiResponse<{
+  bonus: LoginBonus;
+  newStreak: number;
+  totalBonusAmount: number;
+}> {}
+
+export interface AIContentResponse extends ApiResponse<DialogueResponse> {}
+
+// Health check response
 export interface HealthResponse {
   status: 'healthy' | 'degraded' | 'unhealthy';
-  timestamp: number;
+  timestamp: string;
   services: {
     redis: boolean;
-    reddit: boolean;
+    ai: boolean;
   };
+  version: string;
 }

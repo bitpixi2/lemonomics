@@ -1,48 +1,16 @@
 import express from 'express';
-import { GameRunEndpoint } from './game-run-endpoint.js';
-import { ProfileEndpoint } from './profile-endpoint.js';
-import { LeaderboardEndpoint } from './leaderboard-endpoint.js';
-import { CurrentCycleEndpoint } from './current-cycle-endpoint.js';
-import { PaymentEndpoint } from './payment-endpoint.js';
-import { BonusEndpoint } from './bonus-endpoint.js';
-import { HealthCheckService } from '../monitoring/health-check.js';
-import { SystemMonitor } from '../monitoring/system-monitor.js';
-import { GameAnalyticsService } from '../monitoring/game-analytics.js';
-import { DataMaintenanceService } from '../maintenance/data-maintenance.js';
-import { 
-  getMarketNews, 
-  getCustomerDialogue, 
-  getCustomerInteractions, 
-  getBreakingNews, 
-  getAIStatus 
-} from './ai-content-endpoint.js';
+import { context, redis } from '@devvit/web/server';
+import { DEFAULT_CONFIG } from '../../shared/types/config.js';
+import { LemonadeGameEngine } from '../../shared/engine/GameEngine.js';
+import { WeatherType, FLAIR_REWARDS } from '../../shared/types/game.js';
 
 export class APIServer {
   private app: express.Application;
-  private gameRunEndpoint: GameRunEndpoint;
-  private profileEndpoint: ProfileEndpoint;
-  private leaderboardEndpoint: LeaderboardEndpoint;
-  private currentCycleEndpoint: CurrentCycleEndpoint;
-  private paymentEndpoint: PaymentEndpoint;
-  private bonusEndpoint: BonusEndpoint;
-  private healthCheckService: HealthCheckService;
-  private systemMonitor: SystemMonitor;
-  private analyticsService: GameAnalyticsService;
-  private maintenanceService: DataMaintenanceService;
+  private gameEngine: LemonadeGameEngine;
 
   constructor() {
     this.app = express();
-    this.gameRunEndpoint = new GameRunEndpoint();
-    this.profileEndpoint = new ProfileEndpoint();
-    this.leaderboardEndpoint = new LeaderboardEndpoint();
-    this.currentCycleEndpoint = new CurrentCycleEndpoint();
-    this.paymentEndpoint = new PaymentEndpoint();
-    this.bonusEndpoint = new BonusEndpoint();
-    this.healthCheckService = new HealthCheckService();
-    this.systemMonitor = new SystemMonitor();
-    this.analyticsService = new GameAnalyticsService();
-    this.maintenanceService = new DataMaintenanceService();
-
+    this.gameEngine = new LemonadeGameEngine();
     this.setupMiddleware();
     this.setupRoutes();
   }
@@ -52,32 +20,41 @@ export class APIServer {
     this.app.use(express.json({ limit: '1mb' }));
 
     // CORS headers
-    this.app.use((req, res, next) => {
+    this.app.use((_req, res, next) => {
       res.header('Access-Control-Allow-Origin', '*');
-      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-      res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-user-id, x-username');
-      
-      if (req.method === 'OPTIONS') {
+      res.header(
+        'Access-Control-Allow-Methods',
+        'GET, POST, PUT, DELETE, OPTIONS'
+      );
+      res.header(
+        'Access-Control-Allow-Headers',
+        'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-user-id, x-username'
+      );
+
+      if (_req.method === 'OPTIONS') {
         res.sendStatus(200);
         return;
       }
-      
+
       next();
     });
 
     // Request logging
-    this.app.use((req, res, next) => {
+    this.app.use((req, _res, next) => {
       console.log(`${new Date().toISOString()} ${req.method} ${req.path}`);
       next();
     });
 
-    // User context middleware (simulated for development)
-    this.app.use((req, res, next) => {
-      // In production, this would extract user info from Devvit context
-      if (!req.headers['x-user-id']) {
+    // User context middleware using Devvit context
+    this.app.use((req, _res, next) => {
+      // Extract user info from Devvit context
+      try {
+        const { userId, username } = context;
+        req.headers['x-user-id'] = userId || 'anonymous';
+        req.headers['x-username'] = username || 'anonymous';
+      } catch (error) {
+        // Fallback for development/testing
         req.headers['x-user-id'] = 'dev-user-123';
-      }
-      if (!req.headers['x-username']) {
         req.headers['x-username'] = 'dev_user';
       }
       next();
@@ -85,294 +62,511 @@ export class APIServer {
   }
 
   private setupRoutes(): void {
-    // Health check endpoints
-    this.app.get('/api/health', async (req, res) => {
-      try {
-        const health = await this.healthCheckService.basicHealthCheck();
-        res.json(health);
-      } catch (error) {
-        res.status(500).json({
-          status: 'unhealthy',
-          timestamp: new Date().toISOString(),
-          error: 'Health check failed'
-        });
-      }
-    });
-
-    this.app.get('/api/health/detailed', async (req, res) => {
-      try {
-        const health = await this.healthCheckService.detailedHealthCheck();
-        res.json(health);
-      } catch (error) {
-        res.status(500).json({
-          success: false,
-          error: 'Detailed health check failed'
-        });
-      }
-    });
-
-    this.app.get('/api/health/ready', async (req, res) => {
-      try {
-        const readiness = await this.healthCheckService.readinessCheck();
-        res.status(readiness.ready ? 200 : 503).json(readiness);
-      } catch (error) {
-        res.status(503).json({
-          ready: false,
-          checks: {},
-          message: 'Readiness check failed'
-        });
-      }
-    });
-
-    this.app.get('/api/health/live', async (req, res) => {
-      try {
-        const liveness = await this.healthCheckService.livenessCheck();
-        res.status(liveness.alive ? 200 : 503).json(liveness);
-      } catch (error) {
-        res.status(503).json({
-          alive: false,
-          checks: {},
-          message: 'Liveness check failed'
-        });
-      }
-    });
-
-    this.app.get('/api/health/metrics', async (req, res) => {
-      try {
-        const metrics = await this.healthCheckService.getPerformanceMetrics();
-        res.json(metrics);
-      } catch (error) {
-        res.status(500).json({
-          success: false,
-          error: 'Failed to get performance metrics'
-        });
-      }
+    // Basic health check
+    this.app.get('/api/health', (_req, res) => {
+      res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        service: 'lemonomics-api',
+      });
     });
 
     // Game configuration
-    this.app.get('/api/config', (req, res) => {
+    this.app.get('/api/config', (_req, res) => {
       res.json({
         success: true,
-        config: {
-          game: {
-            minPrice: 0.25,
-            maxPrice: 3.00,
-            minAdSpend: 0,
-            maxAdSpend: 50
+        config: DEFAULT_CONFIG,
+      });
+    });
+
+    // Core game endpoints
+    this.app.post('/api/start-game', async (req, res) => {
+      try {
+        const userId = req.headers['x-user-id'] as string;
+        const session = await this.gameEngine.startNewGame(userId);
+
+        res.json({
+          success: true,
+          session: {
+            sessionId: session.sessionId,
+            day: session.currentDay,
+            cash: session.cash,
+            inventory: session.inventory,
+            weather: this.generateRandomWeather(),
           },
-          powerups: {
-            super_sugar: { price: 0.99, dailyLimit: 3 },
-            perfect_day: { price: 1.99, dailyLimit: 1 },
-            free_ad: { price: 0.49, dailyLimit: 5 }
-          }
+        });
+      } catch (error) {
+        console.error('Start game error:', error);
+        res.status(500).json({
+          success: false,
+          error:
+            error instanceof Error ? error.message : 'Failed to start game',
+        });
+      }
+    });
+
+    this.app.post('/api/purchase-ingredients', async (req, res) => {
+      try {
+        const { sessionId, lemons, sugar, cups } = req.body;
+
+        if (
+          !sessionId ||
+          typeof lemons !== 'number' ||
+          typeof sugar !== 'number' ||
+          typeof cups !== 'number'
+        ) {
+          return res.status(400).json({
+            success: false,
+            error: 'Missing required fields: sessionId, lemons, sugar, cups',
+          });
         }
-      });
-    });
 
-    // Game run endpoint
-    this.app.post('/api/run-game', (req, res) => {
-      this.gameRunEndpoint.handleGameRun(req, res);
-    });
+        const result = this.gameEngine.purchaseIngredients(sessionId, {
+          lemons,
+          sugar,
+          cups,
+        });
 
-    // Profile endpoints
-    this.app.get('/api/profile', (req, res) => {
-      this.profileEndpoint.handleGetProfile(req, res);
-    });
+        if (!result.success) {
+          return res.status(400).json({
+            success: false,
+            error: result.error,
+          });
+        }
 
-    this.app.put('/api/profile', (req, res) => {
-      this.profileEndpoint.handleUpdateProfile(req, res);
-    });
-
-    // Leaderboard endpoints
-    this.app.get('/api/leaderboards', (req, res) => {
-      this.leaderboardEndpoint.handleGetLeaderboards(req, res);
-    });
-
-    this.app.get('/api/user-rank', (req, res) => {
-      this.leaderboardEndpoint.handleGetUserRank(req, res);
-    });
-
-    // Current cycle endpoints
-    this.app.get('/api/current-cycle', (req, res) => {
-      this.currentCycleEndpoint.handleGetCurrentCycle(req, res);
-    });
-
-    this.app.get('/api/cycle-history', (req, res) => {
-      this.currentCycleEndpoint.handleGetCycleHistory(req, res);
-    });
-
-    // Payment endpoints
-    this.app.post('/api/purchase', (req, res) => {
-      this.paymentEndpoint.handlePurchase(req, res);
-    });
-
-    this.app.get('/api/powerup-status', (req, res) => {
-      this.paymentEndpoint.handleGetPowerupStatus(req, res);
-    });
-
-    this.app.post('/api/verify-receipt', (req, res) => {
-      this.paymentEndpoint.handleVerifyReceipt(req, res);
-    });
-
-    // Bonus endpoints
-    this.app.post('/api/bonus/claim', (req, res) => {
-      this.bonusEndpoint.handleClaimBonus(req, res);
-    });
-
-    this.app.get('/api/bonus/status', (req, res) => {
-      this.bonusEndpoint.handleGetBonusStatus(req, res);
-    });
-
-    this.app.get('/api/bonus/preview', (req, res) => {
-      this.bonusEndpoint.handlePreviewBonus(req, res);
-    });
-
-    this.app.get('/api/bonus/stats', (req, res) => {
-      this.bonusEndpoint.handleGetBonusStats(req, res);
-    });
-
-    this.app.get('/api/bonus/check/:bonusType', (req, res) => {
-      this.bonusEndpoint.handleCheckActiveBonus(req, res);
-    });
-
-    this.app.get('/api/bonus/streak', (req, res) => {
-      this.bonusEndpoint.handleGetLoginStreak(req, res);
-    });
-
-    this.app.get('/api/bonus/history', (req, res) => {
-      this.bonusEndpoint.handleGetBonusHistory(req, res);
-    });
-
-    this.app.get('/api/bonus/validate', (req, res) => {
-      this.bonusEndpoint.handleValidateBonusClaim(req, res);
-    });
-
-    // AI Content endpoints
-    this.app.get('/api/market-news', getMarketNews);
-    this.app.get('/api/customer-dialogue', getCustomerDialogue);
-    this.app.get('/api/customer-interactions', getCustomerInteractions);
-    this.app.post('/api/breaking-news', getBreakingNews);
-    this.app.get('/api/ai-status', getAIStatus);
-
-    // Analytics endpoints
-    this.app.get('/api/analytics', (req, res) => {
-      try {
-        const { timeframe = 'day' } = req.query;
-        const analytics = this.analyticsService.getGameAnalytics(timeframe as 'day' | 'week' | 'month');
         res.json({
           success: true,
-          analytics
+          newCash: result.newCash,
+          newInventory: result.newInventory,
         });
       } catch (error) {
+        console.error('Purchase ingredients error:', error);
         res.status(500).json({
           success: false,
-          error: 'Failed to get analytics'
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Failed to purchase ingredients',
         });
       }
     });
 
-    this.app.get('/api/analytics/engagement', (req, res) => {
+    this.app.post('/api/end-day', async (req, res) => {
       try {
-        const { timeframe = 'day' } = req.query;
-        const engagement = this.analyticsService.getEngagementMetrics(timeframe as 'day' | 'week' | 'month');
+        const { sessionId, dayInput, weather } = req.body;
+
+        if (!sessionId || !dayInput) {
+          return res.status(400).json({
+            success: false,
+            error: 'Missing required fields: sessionId, dayInput',
+          });
+        }
+
+        const dayWeather = weather || this.generateRandomWeather();
+        const dayResult = await this.gameEngine.playDay(
+          sessionId,
+          dayInput,
+          dayWeather
+        );
+
+        // Check for achievement milestones
+        const session = this.gameEngine.getSession(sessionId);
+        const achievements = session
+          ? this.checkAchievements(session.cash)
+          : [];
+
         res.json({
           success: true,
-          engagement
+          dayResult,
+          totalCash: session?.cash || 0,
+          achievements,
         });
       } catch (error) {
+        console.error('End day error:', error);
         res.status(500).json({
           success: false,
-          error: 'Failed to get engagement metrics'
+          error: error instanceof Error ? error.message : 'Failed to end day',
         });
       }
     });
 
-    this.app.get('/api/analytics/monetization', (req, res) => {
+    this.app.post('/api/end-game', async (req, res) => {
       try {
-        const { timeframe = 'day' } = req.query;
-        const monetization = this.analyticsService.getMonetizationMetrics(timeframe as 'day' | 'week' | 'month');
+        const { sessionId } = req.body;
+
+        if (!sessionId) {
+          return res.status(400).json({
+            success: false,
+            error: 'Missing required field: sessionId',
+          });
+        }
+
+        const gameEndResult = await this.gameEngine.endGame(sessionId);
+
         res.json({
           success: true,
-          monetization
+          gameEndResult,
         });
       } catch (error) {
+        console.error('End game error:', error);
         res.status(500).json({
           success: false,
-          error: 'Failed to get monetization metrics'
+          error: error instanceof Error ? error.message : 'Failed to end game',
         });
       }
     });
 
-    // Maintenance endpoints
-    this.app.get('/api/maintenance/tasks', (req, res) => {
-      try {
-        const tasks = this.maintenanceService.getTasks();
-        res.json({
-          success: true,
-          tasks
-        });
-      } catch (error) {
-        res.status(500).json({
-          success: false,
-          error: 'Failed to get maintenance tasks'
-        });
-      }
-    });
-
-    this.app.post('/api/maintenance/run/:taskId', async (req, res) => {
-      try {
-        const { taskId } = req.params;
-        const result = await this.maintenanceService.runTask(taskId);
-        res.json({
-          success: true,
-          result
-        });
-      } catch (error) {
-        res.status(500).json({
-          success: false,
-          error: `Failed to run maintenance task: ${error}`
-        });
-      }
-    });
-
-    this.app.get('/api/maintenance/stats', (req, res) => {
-      try {
-        const stats = this.maintenanceService.getMaintenanceStats();
-        res.json({
-          success: true,
-          stats
-        });
-      } catch (error) {
-        res.status(500).json({
-          success: false,
-          error: 'Failed to get maintenance stats'
-        });
-      }
-    });
-
-    // Share result endpoint (placeholder)
-    this.app.post('/api/share-result', (req, res) => {
-      // This would integrate with Reddit post creation
+    this.app.get('/api/user-profile', (req, res) => {
       res.json({
         success: true,
-        postUrl: 'https://reddit.com/r/lemonomics_game/posts/shared-result'
+        message: 'User profile endpoint - to be implemented',
       });
+    });
+
+    this.app.get('/api/leaderboard', async (_req, res) => {
+      try {
+        // Get leaderboard from Redis sorted set
+        const leaderboardKey = 'leaderboard:global';
+        const topScores = await redis.zRevRangeWithScores(leaderboardKey, 0, 9); // Top 10
+
+        const leaderboard = await Promise.all(
+          topScores.map(async (entry, index) => {
+            const userKey = `user:${entry.member}`;
+            const userData = await redis.hGetAll(userKey);
+
+            return {
+              rank: index + 1,
+              username: userData.username || entry.member,
+              finalCash: entry.score,
+              daysPlayed: parseInt(userData.daysPlayed || '0'),
+              timestamp: new Date(userData.lastPlayed || Date.now()),
+            };
+          })
+        );
+
+        res.json({
+          success: true,
+          leaderboard,
+        });
+      } catch (error) {
+        console.error('Leaderboard error:', error);
+        // Fallback to mock data if Redis fails
+        const mockLeaderboard = [
+          {
+            rank: 1,
+            username: 'LemonadeKing',
+            finalCash: 150.0,
+            daysPlayed: 12,
+            timestamp: new Date(),
+          },
+          {
+            rank: 2,
+            username: 'CitrusQueen',
+            finalCash: 125.5,
+            daysPlayed: 10,
+            timestamp: new Date(),
+          },
+          {
+            rank: 3,
+            username: 'SugarRush',
+            finalCash: 98.25,
+            daysPlayed: 8,
+            timestamp: new Date(),
+          },
+        ];
+
+        res.json({
+          success: true,
+          leaderboard: mockLeaderboard,
+        });
+      }
+    });
+
+    this.app.post('/api/check-achievements', async (req, res) => {
+      try {
+        const { cash } = req.body;
+
+        if (typeof cash !== 'number') {
+          return res.status(400).json({
+            success: false,
+            error: 'Missing required field: cash (number)',
+          });
+        }
+
+        const achievements = this.checkAchievements(cash);
+
+        res.json({
+          success: true,
+          achievements,
+        });
+      } catch (error) {
+        console.error('Check achievements error:', error);
+        res.status(500).json({
+          success: false,
+          error: 'Failed to check achievements',
+        });
+      }
+    });
+
+    this.app.post('/api/submit-score', async (req, res) => {
+      try {
+        const { finalCash, totalDays } = req.body;
+        const userId = req.headers['x-user-id'] as string;
+        const username = req.headers['x-username'] as string;
+
+        if (typeof finalCash !== 'number' || typeof totalDays !== 'number') {
+          return res.status(400).json({
+            success: false,
+            error:
+              'Missing required fields: finalCash (number), totalDays (number)',
+          });
+        }
+
+        // Save to leaderboard (sorted set by final cash)
+        const leaderboardKey = 'leaderboard:global';
+        await redis.zAdd(leaderboardKey, { member: userId, score: finalCash });
+
+        // Save user data
+        const userKey = `user:${userId}`;
+        await redis.hSet(userKey, {
+          username,
+          finalCash: finalCash.toString(),
+          daysPlayed: totalDays.toString(),
+          lastPlayed: new Date().toISOString(),
+        });
+
+        // Get player's rank
+        const rank = await redis.zRevRank(leaderboardKey, userId);
+        const playerRank = rank !== null ? rank + 1 : -1;
+
+        res.json({
+          success: true,
+          message: 'Score submitted successfully',
+          rank: playerRank,
+        });
+      } catch (error) {
+        console.error('Submit score error:', error);
+        res.status(500).json({
+          success: false,
+          error: 'Failed to submit score',
+        });
+      }
+    });
+
+    this.app.post('/api/assign-flair', async (req, res) => {
+      try {
+        const { flairTemplateId } = req.body;
+        const username = req.headers['x-username'] as string;
+
+        if (!flairTemplateId) {
+          return res.status(400).json({
+            success: false,
+            error: 'Missing required field: flairTemplateId',
+          });
+        }
+
+        // Use Devvit context to assign flair
+        try {
+          const { reddit } = context;
+          const subredditName = await reddit.getCurrentSubredditName();
+
+          await reddit.setUserFlair({
+            username,
+            subredditName,
+            flairTemplateId,
+          });
+
+          console.log(
+            `Assigned flair ${flairTemplateId} to user ${username} in r/${subredditName}`
+          );
+
+          res.json({
+            success: true,
+            message: `Flair assigned to ${username}`,
+          });
+        } catch (redditError) {
+          console.error('Reddit API error:', redditError);
+          res.status(500).json({
+            success: false,
+            error: 'Failed to assign flair via Reddit API',
+          });
+        }
+      } catch (error) {
+        console.error('Assign flair error:', error);
+        res.status(500).json({
+          success: false,
+          error: 'Failed to assign flair',
+        });
+      }
+    });
+
+    this.app.post('/api/save-game', async (req, res) => {
+      try {
+        const { sessionId } = req.body;
+        const userId = req.headers['x-user-id'] as string;
+
+        if (!sessionId) {
+          return res.status(400).json({
+            success: false,
+            error: 'Missing required field: sessionId',
+          });
+        }
+
+        const session = this.gameEngine.getSession(sessionId);
+        if (!session) {
+          return res.status(404).json({
+            success: false,
+            error: 'Session not found',
+          });
+        }
+
+        // Save to Redis
+        const gameKey = `game:${userId}`;
+        await redis.hSet(gameKey, {
+          sessionId: session.sessionId,
+          currentDay: session.currentDay.toString(),
+          cash: session.cash.toString(),
+          inventory: JSON.stringify(session.inventory),
+          dailyResults: JSON.stringify(session.dailyResults),
+          totalDaysPlayed: session.totalDaysPlayed.toString(),
+          lastSaved: new Date().toISOString(),
+        });
+
+        console.log(
+          `Saved game session ${sessionId} for user ${userId} to Redis`
+        );
+
+        res.json({
+          success: true,
+          message: 'Game saved successfully',
+        });
+      } catch (error) {
+        console.error('Save game error:', error);
+        res.status(500).json({
+          success: false,
+          error: 'Failed to save game',
+        });
+      }
+    });
+
+    this.app.get('/api/resume-game', async (req, res) => {
+      try {
+        const userId = req.headers['x-user-id'] as string;
+        const gameKey = `game:${userId}`;
+
+        // Check if saved game exists
+        const savedGame = await redis.hGetAll(gameKey);
+
+        if (!savedGame || Object.keys(savedGame).length === 0) {
+          return res.json({
+            success: true,
+            hasSavedGame: false,
+            message: 'No saved game found',
+          });
+        }
+
+        res.json({
+          success: true,
+          hasSavedGame: true,
+          savedGame: {
+            currentDay: parseInt(savedGame.currentDay || '1'),
+            cash: parseFloat(savedGame.cash || '10.00'),
+            inventory: JSON.parse(
+              savedGame.inventory || '{"lemons":0,"sugar":2,"cups":0}'
+            ),
+            totalDaysPlayed: parseInt(savedGame.totalDaysPlayed || '0'),
+            lastSaved: savedGame.lastSaved,
+          },
+        });
+      } catch (error) {
+        console.error('Resume game error:', error);
+        res.status(500).json({
+          success: false,
+          error: 'Failed to resume game',
+        });
+      }
+    });
+
+    this.app.post('/api/post-progress', async (req, res) => {
+      try {
+        const { sessionId, message } = req.body;
+        const username = req.headers['x-username'] as string;
+
+        if (!sessionId) {
+          return res.status(400).json({
+            success: false,
+            error: 'Missing required field: sessionId',
+          });
+        }
+
+        const session = this.gameEngine.getSession(sessionId);
+        if (!session) {
+          return res.status(404).json({
+            success: false,
+            error: 'Session not found',
+          });
+        }
+
+        // Create Reddit post
+        const progressMessage =
+          message ||
+          `🍋 ${username} just earned $${session.cash.toFixed(2)} in ${session.totalDaysPlayed} days of lemonade business! #Lemonomics`;
+
+        try {
+          const { reddit } = context;
+          const subredditName = await reddit.getCurrentSubredditName();
+
+          const post = await reddit.submitPost({
+            title: `🍋 Lemonomics Progress Report - ${username}`,
+            text: progressMessage,
+            subredditName,
+          });
+
+          console.log(`Created Reddit post: ${post.id} in r/${subredditName}`);
+
+          res.json({
+            success: true,
+            message: 'Progress posted successfully',
+            postId: post.id,
+            postContent: progressMessage,
+          });
+        } catch (redditError) {
+          console.error('Reddit post error:', redditError);
+          res.status(500).json({
+            success: false,
+            error: 'Failed to create Reddit post',
+          });
+        }
+      } catch (error) {
+        console.error('Post progress error:', error);
+        res.status(500).json({
+          success: false,
+          error: 'Failed to post progress',
+        });
+      }
     });
 
     // Error handling middleware
-    this.app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-      console.error('API Error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
-    });
+    this.app.use(
+      (
+        error: any,
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction
+      ) => {
+        console.error('API Error:', error);
+        res.status(500).json({
+          success: false,
+          error: 'Internal server error',
+        });
+      }
+    );
 
     // 404 handler
     this.app.use((req, res) => {
       res.status(404).json({
         success: false,
-        error: 'Endpoint not found'
+        error: 'Endpoint not found',
       });
     });
   }
@@ -383,7 +577,52 @@ export class APIServer {
 
   public listen(port: number): void {
     this.app.listen(port, () => {
-      console.log(`🍋 Karma Lemonade Stand API server running on port ${port}`);
+      console.log(`🍋 Lemonomics API server running on port ${port}`);
     });
+  }
+
+  /**
+   * Generate random weather for a day
+   */
+  private generateRandomWeather(): WeatherType {
+    const weatherTypes = [
+      WeatherType.SUNNY,
+      WeatherType.WINDY,
+      WeatherType.RAINY,
+    ];
+    const weights = [0.5, 0.3, 0.2]; // 50% sunny, 30% windy, 20% rainy
+
+    const random = Math.random();
+    let cumulative = 0;
+
+    for (let i = 0; i < weatherTypes.length; i++) {
+      cumulative += weights[i] || 0;
+      if (random <= cumulative) {
+        return weatherTypes[i] || WeatherType.SUNNY;
+      }
+    }
+
+    return WeatherType.SUNNY; // Fallback
+  }
+
+  /**
+   * Check for achievement milestones and return earned flairs
+   */
+  private checkAchievements(
+    cash: number
+  ): Array<{ templateId: string; name: string; description: string }> {
+    const achievements = [];
+
+    for (const reward of FLAIR_REWARDS) {
+      if (cash >= reward.cashThreshold) {
+        achievements.push({
+          templateId: reward.templateId,
+          name: reward.name,
+          description: reward.description,
+        });
+      }
+    }
+
+    return achievements;
   }
 }
