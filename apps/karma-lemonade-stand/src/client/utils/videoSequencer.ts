@@ -2,7 +2,7 @@
 import { VideoAsset, VIDEO_ASSETS } from '../../shared/types/video.js';
 import { WeatherType } from '../../shared/types/game.js';
 
-export type GamePhase = 'intro' | 'ingredients' | 'customers' | 'loading-results' | 'results' | 'leaderboard';
+export type GamePhase = 'intro' | 'ingredients' | 'customers' | 'loading-results' | 'results' | 'leaderboard' | 'daily-limit';
 
 export interface SequenceStep {
   phase: GamePhase;

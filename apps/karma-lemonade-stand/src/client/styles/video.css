@@ -1147,6 +1147,78 @@
   background: #1E4DB8;
 }
 
+.share-results-button {
+  flex: 1;
+  background: #FF6B35;
+  color: white;
+  border: none;
+  padding: 15px 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.share-results-button:hover {
+  background: #E55A2B;
+}
+
+.continue-button {
+  flex: 2;
+  background: #32CD32;
+  color: white;
+  border: none;
+  padding: 15px 20px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.continue-button:hover {
+  background: #228B22;
+}
+
+/* Daily limit screen styles */
+.daily-limit-overlay {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 30px;
+  border-radius: 15px;
+  max-width: 500px;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+.current-progress {
+  background: rgba(255, 215, 0, 0.2);
+  padding: 15px;
+  border-radius: 10px;
+  margin: 20px 0;
+  border: 2px solid rgba(255, 215, 0, 0.5);
+}
+
+.current-progress h3 {
+  color: #FFD700;
+  margin-bottom: 10px;
+}
+
+.current-progress p {
+  margin: 5px 0;
+  font-weight: bold;
+}
+
+.daily-limit-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 25px;
+}
+
 /* Audio Control Styles */
 .audio-control {
   position: fixed;

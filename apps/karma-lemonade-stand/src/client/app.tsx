@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  GameState,
-  WeatherType
-} from '../shared/types/game.js';
+import { GameState, WeatherType } from '../shared/types/game.js';
 import { VideoPlayer } from './components/VideoPlayer.js';
 import { VideoPreloader } from './utils/videoPreloader.js';
 import { VideoSequencer, GamePhase } from './utils/videoSequencer.js';
@@ -31,24 +28,28 @@ interface AppState {
 export const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>({
     phase: 'intro',
-    isLoading: true
+    isLoading: true,
   });
 
   // Generate random weather
   const generateRandomWeather = (): WeatherType => {
-    const weatherTypes = [WeatherType.SUNNY, WeatherType.WINDY, WeatherType.RAINY];
+    const weatherTypes = [
+      WeatherType.SUNNY,
+      WeatherType.WINDY,
+      WeatherType.RAINY,
+    ];
     const weights = [0.5, 0.3, 0.2]; // 50% sunny, 30% windy, 20% rainy
-    
+
     const random = Math.random();
     let cumulative = 0;
-    
+
     for (let i = 0; i < weatherTypes.length; i++) {
       cumulative += weights[i] || 0;
       if (random <= cumulative) {
         return weatherTypes[i] || WeatherType.SUNNY;
       }
     }
-    
+
     return WeatherType.SUNNY; // Fallback
   };
 
@@ -56,48 +57,51 @@ export const App: React.FC = () => {
   useEffect(() => {
     const initializeVideoSystems = async () => {
       try {
-        const preloader = new VideoPreloader({ 
+        const preloader = new VideoPreloader({
           preloadStrategy: 'intro',
-          muted: false // Allow sound for better experience
+          muted: false, // Allow sound for better experience
         });
         const sequencer = new VideoSequencer();
-        
+
         // Initialize audio system
         const gameAudio = new GameAudio();
-        
+
         // Preload game audio assets
         gameAudio.preloadGameAudio();
-        
+
         console.log('Initializing video systems...');
-        
+
         // Preload intro videos
         await preloader.preloadVideos();
-        
-        console.log('Video preloading complete. Preload status:', preloader.getPreloadStatus());
-        
+
+        console.log(
+          'Video preloading complete. Preload status:',
+          preloader.getPreloadStatus()
+        );
+
         // Generate random weather for intro
         const introWeather = generateRandomWeather();
-        
+
         // Start intro sequence
         const introSequence = sequencer.createIntroSequence(introWeather);
         sequencer.startSequence(introSequence);
-        
+
         // Start background music
         gameAudio.playPhaseMusic('intro');
-        
-        setAppState(prev => ({
+
+        setAppState((prev) => ({
           ...prev,
           videoPreloader: preloader,
           videoSequencer: sequencer,
           gameAudio: gameAudio,
-          isLoading: false
+          isLoading: false,
         }));
       } catch (error) {
         console.error('Failed to initialize video systems:', error);
-        setAppState(prev => ({
+        setAppState((prev) => ({
           ...prev,
           error: `Failed to load video assets: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          isLoading: false
+          isLoading: false,
         }));
       }
     };
@@ -112,70 +116,75 @@ export const App: React.FC = () => {
       const nextStep = appState.videoSequencer.nextStep();
       if (!nextStep) {
         // Sequence complete, show start game button
-        setAppState(prev => ({ ...prev, phase: 'intro' }));
+        setAppState((prev) => ({ ...prev, phase: 'intro' }));
       }
     }
   };
 
   const handleVideoError = (error: Error) => {
     console.error('Video playback error:', error);
-    setAppState(prev => ({
+    setAppState((prev) => ({
       ...prev,
-      error: `Video playback failed: ${error.message}`
+      error: `Video playback failed: ${error.message}`,
     }));
   };
 
   const handleStartGame = async () => {
     if (!appState.videoSequencer || !appState.videoPreloader) return;
-    
-    setAppState(prev => ({ ...prev, isLoading: true }));
-    
+
+    setAppState((prev) => ({ ...prev, isLoading: true }));
+
     try {
       // Preload weather-specific videos for better experience
       await appState.videoPreloader.preloadWeatherVideos(WeatherType.SUNNY);
-      
+
       // Initialize a basic game state
       const initialGameState: GameState = {
         day: 1,
-        cash: 10.00,
+        cash: 10.0,
         inventory: {
           lemons: 0,
           sugar: 2, // Free sugar from mom
-          cups: 0
+          cups: 0,
         },
         weather: WeatherType.SUNNY,
         festival: 'summer' as any, // Will be properly typed in future tasks
-        karmaBoost: { multiplier: 1.0, level: 'none', description: 'No bonus', threshold: 0 },
-        isFirstDay: true
+        karmaBoost: {
+          multiplier: 1.0,
+          level: 'none',
+          description: 'No bonus',
+          threshold: 0,
+        },
+        isFirstDay: true,
       };
 
       // Generate weather for the day
       const dayWeather = generateRandomWeather();
-      
+
       // Start ingredients phase (ingredients video with selection overlay)
       const daySequence = appState.videoSequencer.createDaySequence(dayWeather);
       appState.videoSequencer.startSequence(daySequence);
-      
+
       // Update game state with the day's weather
       const gameStateWithWeather = { ...initialGameState, weather: dayWeather };
-      
-      setAppState(prev => ({ 
-        ...prev, 
+
+      setAppState((prev) => ({
+        ...prev,
         gameState: gameStateWithWeather,
         phase: 'ingredients',
-        isLoading: false 
+        isLoading: false,
       }));
-      
+
       // Continue background music for ingredients phase
       if (appState.gameAudio) {
         appState.gameAudio.playPhaseMusic('ingredients');
       }
     } catch (error) {
       console.error('Failed to start game:', error);
-      setAppState(prev => ({
+      setAppState((prev) => ({
         ...prev,
         error: `Failed to start game: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        isLoading: false
+        isLoading: false,
       }));
     }
   };
@@ -196,9 +205,7 @@ export const App: React.FC = () => {
       <div className="app">
         <div className="video-error">
           <div className="error-message">{appState.error}</div>
-          <button onClick={() => window.location.reload()}>
-            Reload Game
-          </button>
+          <button onClick={() => window.location.reload()}>Reload Game</button>
         </div>
         <AudioControl className="audio-control-error" />
       </div>
@@ -208,7 +215,7 @@ export const App: React.FC = () => {
   // Intro phase - show ghost intro video
   if (appState.phase === 'intro' && appState.videoPreloader) {
     const currentStep = appState.videoSequencer?.getCurrentStep();
-    
+
     return (
       <div className="app">
         <AudioControl className="audio-control-intro" />
@@ -230,32 +237,40 @@ export const App: React.FC = () => {
               <h1>🍋 Lemonomics</h1>
               <p>A Simple Reddit-Integrated Lemonade Stand Game</p>
               <div className="intro-story">
-                <p>Welcome to the classic lemonade stand game! Your mom gives you $10 and 2 free cups of sugar to start. Can you build a successful business?</p>
+                <p>
+                  Welcome to the classic lemonade stand game! Your mom gives you
+                  $10 and 2 free cups of sugar to start. Can you build a
+                  successful business?
+                </p>
               </div>
-              <button 
-                onClick={handleStartGame} 
+              <button
+                onClick={handleStartGame}
                 className="start-game-button"
                 disabled={appState.isLoading}
               >
                 {appState.isLoading ? 'Starting...' : 'Start Game'}
               </button>
-              
+
               {/* Developer mode toggle (hidden button) */}
-              <button 
+              <button
                 onClick={() => {
                   const isDev = localStorage.getItem('isDeveloper') === 'true';
                   localStorage.setItem('isDeveloper', (!isDev).toString());
-                  alert(isDev ? 'Developer mode disabled' : 'Developer mode enabled - Real-day restrictions disabled');
+                  alert(
+                    isDev
+                      ? 'Developer mode disabled'
+                      : 'Developer mode enabled - Real-day restrictions disabled'
+                  );
                 }}
-                style={{ 
-                  position: 'absolute', 
-                  bottom: '10px', 
-                  right: '10px', 
-                  opacity: 0.1, 
+                style={{
+                  position: 'absolute',
+                  bottom: '10px',
+                  right: '10px',
+                  opacity: 0.1,
                   fontSize: '10px',
                   background: 'transparent',
                   border: 'none',
-                  color: 'gray'
+                  color: 'gray',
                 }}
               >
                 Dev
@@ -268,9 +283,13 @@ export const App: React.FC = () => {
   }
 
   // Ingredients phase - show ingredients video with selection overlay
-  if (appState.phase === 'ingredients' && appState.gameState && appState.videoPreloader) {
+  if (
+    appState.phase === 'ingredients' &&
+    appState.gameState &&
+    appState.videoPreloader
+  ) {
     const currentStep = appState.videoSequencer?.getCurrentStep();
-    
+
     return (
       <div className="app">
         <AudioControl className="audio-control-ingredients" />
@@ -288,7 +307,7 @@ export const App: React.FC = () => {
               fadeIn={currentStep.fadeTransition || false}
             />
           )}
-          
+
           {currentStep?.showUI && (
             <div className="video-overlay interactive">
               <div className="overlay-content">
@@ -297,36 +316,44 @@ export const App: React.FC = () => {
                   <p>Cash: ${appState.gameState.cash.toFixed(2)}</p>
                   <p>Weather: {appState.gameState.weather}</p>
                 </div>
-                <IngredientSelection 
+                <IngredientSelection
                   gameState={appState.gameState}
                   onPurchase={(ingredients) => {
                     console.log('Purchased ingredients:', ingredients);
-                    
+
                     // Update game state with purchased ingredients
                     const updatedGameState = {
                       ...appState.gameState!,
                       inventory: {
-                        lemons: appState.gameState!.inventory.lemons + ingredients.lemons,
-                        sugar: appState.gameState!.inventory.sugar + ingredients.sugar,
-                        cups: appState.gameState!.inventory.cups + ingredients.cups,
+                        lemons:
+                          appState.gameState!.inventory.lemons +
+                          ingredients.lemons,
+                        sugar:
+                          appState.gameState!.inventory.sugar +
+                          ingredients.sugar,
+                        cups:
+                          appState.gameState!.inventory.cups + ingredients.cups,
                       },
-                      cash: appState.gameState!.cash - (
-                        ingredients.lemons * 0.50 + 
-                        ingredients.sugar * 0.25 + 
-                        ingredients.cups * 0.10
-                      )
+                      cash:
+                        appState.gameState!.cash -
+                        (ingredients.lemons * 0.5 +
+                          ingredients.sugar * 0.25 +
+                          ingredients.cups * 0.1),
                     };
 
                     // Move to loading results phase
-                    setAppState(prev => ({ 
-                      ...prev, 
+                    setAppState((prev) => ({
+                      ...prev,
                       gameState: updatedGameState,
-                      phase: 'loading-results' 
+                      phase: 'loading-results',
                     }));
 
                     // Start loading results video sequence
                     if (appState.videoSequencer) {
-                      const loadingSequence = appState.videoSequencer.createLoadingSequence(updatedGameState.weather);
+                      const loadingSequence =
+                        appState.videoSequencer.createLoadingSequence(
+                          updatedGameState.weather
+                        );
                       appState.videoSequencer.startSequence(loadingSequence);
                     }
 
@@ -336,9 +363,9 @@ export const App: React.FC = () => {
                         // Call the real game engine API to play the day
                         const dayInput = {
                           lemons: ingredients.lemons,
-                          sugar: ingredients.sugar, 
+                          sugar: ingredients.sugar,
                           cups: ingredients.cups,
-                          pricePerCup: 0.75 // Default price, could be made configurable
+                          pricePerCup: 0.75, // Default price, could be made configurable
                         };
 
                         const response = await fetch('/api/end-day', {
@@ -349,73 +376,99 @@ export const App: React.FC = () => {
                           body: JSON.stringify({
                             sessionId: 'current-session', // TODO: Use real session ID
                             dayInput,
-                            weather: updatedGameState.weather
+                            weather: updatedGameState.weather,
                           }),
                         });
 
                         const result = await response.json();
-                        
+
                         if (result.success && result.dayResult) {
                           const realResults = {
                             cupsSold: result.dayResult.cupsSold,
                             revenue: result.dayResult.revenue,
                             profit: result.dayResult.profit,
-                            expenses: result.dayResult.expenses
+                            expenses: result.dayResult.expenses,
                           };
 
-                          setAppState(prev => ({ 
-                            ...prev, 
+                          setAppState((prev) => ({
+                            ...prev,
                             phase: 'results',
                             dayResults: realResults,
                             gameState: {
                               ...updatedGameState,
-                              cash: result.totalCash || updatedGameState.cash
-                            }
+                              cash: result.totalCash || updatedGameState.cash,
+                            },
                           }));
                         } else {
                           // Fallback to simple calculation if API fails
                           const fallbackResults = {
-                            cupsSold: Math.min(ingredients.cups, Math.floor(Math.random() * 15) + 5),
+                            cupsSold: Math.min(
+                              ingredients.cups,
+                              Math.floor(Math.random() * 15) + 5
+                            ),
                             revenue: 0,
                             profit: 0,
-                            expenses: ingredients.lemons * 0.50 + ingredients.sugar * 0.25 + ingredients.cups * 0.10
+                            expenses:
+                              ingredients.lemons * 0.5 +
+                              ingredients.sugar * 0.25 +
+                              ingredients.cups * 0.1,
                           };
-                          fallbackResults.revenue = fallbackResults.cupsSold * 0.75;
-                          fallbackResults.profit = fallbackResults.revenue - fallbackResults.expenses;
+                          fallbackResults.revenue =
+                            fallbackResults.cupsSold * 0.75;
+                          fallbackResults.profit =
+                            fallbackResults.revenue - fallbackResults.expenses;
 
-                          setAppState(prev => ({ 
-                            ...prev, 
+                          setAppState((prev) => ({
+                            ...prev,
                             phase: 'results',
-                            dayResults: fallbackResults
+                            dayResults: fallbackResults,
                           }));
                         }
 
                         // Start results video
                         if (appState.videoSequencer) {
-                          const resultsSequence = appState.videoSequencer.createResultsSequence(updatedGameState.weather);
-                          appState.videoSequencer.startSequence(resultsSequence);
+                          const resultsSequence =
+                            appState.videoSequencer.createResultsSequence(
+                              updatedGameState.weather
+                            );
+                          appState.videoSequencer.startSequence(
+                            resultsSequence
+                          );
                         }
                       } catch (error) {
-                        console.error('Failed to calculate day results:', error);
+                        console.error(
+                          'Failed to calculate day results:',
+                          error
+                        );
                         // Fallback to simple calculation
                         const fallbackResults = {
-                          cupsSold: Math.min(ingredients.cups, Math.floor(Math.random() * 15) + 5),
+                          cupsSold: Math.min(
+                            ingredients.cups,
+                            Math.floor(Math.random() * 15) + 5
+                          ),
                           revenue: 0,
                           profit: 0,
-                          expenses: ingredients.lemons * 0.50 + ingredients.sugar * 0.25 + ingredients.cups * 0.10
+                          expenses:
+                            ingredients.lemons * 0.5 +
+                            ingredients.sugar * 0.25 +
+                            ingredients.cups * 0.1,
                         };
-                        fallbackResults.revenue = fallbackResults.cupsSold * 0.75;
-                        fallbackResults.profit = fallbackResults.revenue - fallbackResults.expenses;
+                        fallbackResults.revenue =
+                          fallbackResults.cupsSold * 0.75;
+                        fallbackResults.profit =
+                          fallbackResults.revenue - fallbackResults.expenses;
 
-                        setAppState(prev => ({ 
-                          ...prev, 
+                        setAppState((prev) => ({
+                          ...prev,
                           phase: 'results',
-                          dayResults: fallbackResults
+                          dayResults: fallbackResults,
                         }));
                       }
                     }, 3000);
                   }}
-                  onBack={() => setAppState(prev => ({ ...prev, phase: 'intro' }))}
+                  onBack={() =>
+                    setAppState((prev) => ({ ...prev, phase: 'intro' }))
+                  }
                 />
               </div>
             </div>
@@ -426,9 +479,13 @@ export const App: React.FC = () => {
   }
 
   // Loading results phase - show loading video
-  if (appState.phase === 'loading-results' && appState.gameState && appState.videoPreloader) {
+  if (
+    appState.phase === 'loading-results' &&
+    appState.gameState &&
+    appState.videoPreloader
+  ) {
     const currentStep = appState.videoSequencer?.getCurrentStep();
-    
+
     return (
       <div className="app">
         <AudioControl className="audio-control-loading" />
@@ -445,7 +502,7 @@ export const App: React.FC = () => {
               loop={false}
             />
           )}
-          
+
           <div className="video-overlay">
             <div className="loading-message">
               <h2>🍋 Selling Lemonade...</h2>
@@ -458,9 +515,14 @@ export const App: React.FC = () => {
   }
 
   // Results phase - show results video with overlay
-  if (appState.phase === 'results' && appState.gameState && appState.dayResults && appState.videoPreloader) {
+  if (
+    appState.phase === 'results' &&
+    appState.gameState &&
+    appState.dayResults &&
+    appState.videoPreloader
+  ) {
     const currentStep = appState.videoSequencer?.getCurrentStep();
-    
+
     return (
       <div className="app">
         <AudioControl className="audio-control-results" />
@@ -477,7 +539,7 @@ export const App: React.FC = () => {
               loop={true}
             />
           )}
-          
+
           <div className="video-overlay interactive">
             <div className="results-overlay">
               <h2>🍋 Day {appState.gameState.day} Results</h2>
@@ -500,53 +562,230 @@ export const App: React.FC = () => {
                 </div>
                 <div className="result-item total">
                   <span>Total Cash:</span>
-                  <span>${(appState.gameState.cash + appState.dayResults.profit).toFixed(2)}</span>
+                  <span>
+                    $
+                    {(
+                      appState.gameState.cash + appState.dayResults.profit
+                    ).toFixed(2)}
+                  </span>
                 </div>
               </div>
-              
+
               <div className="results-actions">
                 {/* Check if user is developer (bitpixi) for testing */}
-                {window.location.href.includes('bitpixi') || localStorage.getItem('isDeveloper') === 'true' ? (
+                {window.location.href.includes('bitpixi') ||
+                localStorage.getItem('isDeveloper') === 'true' ? (
                   <>
                     <div className="developer-mode-message">
                       <p>🔧 Developer Mode: Real-day restrictions disabled</p>
                     </div>
-                    <button 
+                    <button
                       className="next-day-button"
                       onClick={() => {
                         // Update cash and move to next day (developer mode)
                         const updatedGameState = {
                           ...appState.gameState!,
-                          cash: appState.gameState!.cash + appState.dayResults!.profit,
-                          day: appState.gameState!.day + 1
+                          cash:
+                            appState.gameState!.cash +
+                            appState.dayResults!.profit,
+                          day: appState.gameState!.day + 1,
                         };
-                        setAppState(prev => ({ 
-                          ...prev, 
+                        setAppState((prev) => ({
+                          ...prev,
                           gameState: updatedGameState,
                           phase: 'ingredients',
-                          dayResults: undefined
+                          dayResults: undefined,
                         }));
                       }}
                     >
                       Next Day (Dev Mode)
                     </button>
+                    <button
+                      className="share-results-button"
+                      onClick={async () => {
+                        try {
+                          const response = await fetch('/api/post-progress', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                              sessionId: appState.sessionId || 'current-session',
+                              message: `🍋 Day ${appState.gameState!.day} Results: Sold ${appState.dayResults!.cupsSold} cups, earned $${appState.dayResults!.profit.toFixed(2)} profit! Total cash: $${(appState.gameState!.cash + appState.dayResults!.profit).toFixed(2)} #Lemonomics`
+                            }),
+                          });
+                          
+                          const result = await response.json();
+                          if (result.success) {
+                            alert('Results shared to Reddit!');
+                          } else {
+                            alert('Failed to share results: ' + result.error);
+                          }
+                        } catch (error) {
+                          console.error('Share error:', error);
+                          alert('Failed to share results');
+                        }
+                      }}
+                    >
+                      📱 Share Results
+                    </button>
                   </>
                 ) : (
-                  <div className="daily-limit-message">
-                    <h3>🌙 That's all for today!</h3>
-                    <p>Come back tomorrow to continue your lemonade business.</p>
-                    <p>Your progress has been saved.</p>
-                  </div>
+                  <>
+                    <button
+                      className="share-results-button"
+                      onClick={async () => {
+                        try {
+                          const response = await fetch('/api/post-progress', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                              sessionId: appState.sessionId || 'current-session',
+                              message: `🍋 Day ${appState.gameState!.day} Results: Sold ${appState.dayResults!.cupsSold} cups, earned $${appState.dayResults!.profit.toFixed(2)} profit! Total cash: $${(appState.gameState!.cash + appState.dayResults!.profit).toFixed(2)} #Lemonomics`
+                            }),
+                          });
+                          
+                          const result = await response.json();
+                          if (result.success) {
+                            alert('Results shared to Reddit!');
+                          } else {
+                            alert('Failed to share results: ' + result.error);
+                          }
+                        } catch (error) {
+                          console.error('Share error:', error);
+                          alert('Failed to share results');
+                        }
+                      }}
+                    >
+                      📱 Share Results
+                    </button>
+                    <button
+                      className="continue-button"
+                      onClick={() => {
+                        // Update cash and move to daily limit screen
+                        const updatedGameState = {
+                          ...appState.gameState!,
+                          cash:
+                            appState.gameState!.cash + appState.dayResults!.profit,
+                          day: appState.gameState!.day + 1,
+                        };
+                        setAppState((prev) => ({
+                          ...prev,
+                          gameState: updatedGameState,
+                          phase: 'daily-limit',
+                          dayResults: undefined,
+                        }));
+                      }}
+                    >
+                      Continue
+                    </button>
+                  </>
                 )}
-                <button 
+                <button
                   className="view-leaderboard-button"
-                  onClick={() => setAppState(prev => ({ ...prev, phase: 'leaderboard' }))}
+                  onClick={() =>
+                    setAppState((prev) => ({ ...prev, phase: 'leaderboard' }))
+                  }
                 >
                   View Leaderboard
                 </button>
-                <button 
+                <button
                   className="restart-button"
-                  onClick={() => setAppState(prev => ({ ...prev, phase: 'intro' }))}
+                  onClick={() =>
+                    setAppState((prev) => ({ ...prev, phase: 'intro' }))
+                  }
+                >
+                  Start New Game
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Daily limit phase - show "come back tomorrow" message
+  if (appState.phase === 'daily-limit' && appState.gameState && appState.videoPreloader) {
+    const currentStep = appState.videoSequencer?.getCurrentStep();
+
+    return (
+      <div className="app">
+        <AudioControl className="audio-control-daily-limit" />
+        <div className="video-container">
+          {currentStep && (
+            <VideoPlayer
+              videoAsset={currentStep.video}
+              preloader={appState.videoPreloader}
+              onVideoError={handleVideoError}
+              className="daily-limit-video"
+              autoplay={true}
+              controls={false}
+              muted={false}
+              loop={true}
+            />
+          )}
+
+          <div className="video-overlay interactive">
+            <div className="daily-limit-overlay">
+              <div className="daily-limit-message">
+                <h2>🌙 That's all for today!</h2>
+                <p>Come back tomorrow to continue your lemonade business.</p>
+                <p>Your progress has been saved.</p>
+                
+                <div className="current-progress">
+                  <h3>Your Progress:</h3>
+                  <p>Day: {appState.gameState.day}</p>
+                  <p>Cash: ${appState.gameState.cash.toFixed(2)}</p>
+                  <p>Inventory: {appState.gameState.inventory.lemons} lemons, {appState.gameState.inventory.sugar} sugar, {appState.gameState.inventory.cups} cups</p>
+                </div>
+              </div>
+
+              <div className="daily-limit-actions">
+                <button
+                  className="share-results-button"
+                  onClick={async () => {
+                    try {
+                      const response = await fetch('/api/post-progress', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          sessionId: appState.sessionId || 'current-session',
+                          message: `🍋 Day ${appState.gameState!.day - 1} Complete! Running my lemonade stand with $${appState.gameState!.cash.toFixed(2)} total cash. Come back tomorrow to see how Day ${appState.gameState!.day} goes! #Lemonomics`
+                        }),
+                      });
+                      
+                      const result = await response.json();
+                      if (result.success) {
+                        alert('Progress shared to Reddit!');
+                      } else {
+                        alert('Failed to share progress: ' + result.error);
+                      }
+                    } catch (error) {
+                      console.error('Share error:', error);
+                      alert('Failed to share progress');
+                    }
+                  }}
+                >
+                  📱 Share My Progress
+                </button>
+                <button
+                  className="view-leaderboard-button"
+                  onClick={() =>
+                    setAppState((prev) => ({ ...prev, phase: 'leaderboard' }))
+                  }
+                >
+                  View Leaderboard
+                </button>
+                <button
+                  className="restart-button"
+                  onClick={() =>
+                    setAppState((prev) => ({ ...prev, phase: 'intro' }))
+                  }
                 >
                   Start New Game
                 </button>
