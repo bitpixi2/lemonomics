@@ -8,6 +8,7 @@ import { VideoPreloader } from './utils/videoPreloader.js';
 import { VideoSequencer, GamePhase } from './utils/videoSequencer.js';
 import { GameAudio } from './utils/gameAudio.js';
 import { AudioControl } from './components/AudioControl.js';
+import { IngredientSelection } from './components/IngredientSelection.js';
 // VIDEO_ASSETS imported in video components
 
 interface AppState {
@@ -222,10 +223,7 @@ export const App: React.FC = () => {
               <h1>🍋 Lemonomics</h1>
               <p>A Simple Reddit-Integrated Lemonade Stand Game</p>
               <div className="intro-story">
-                <p>Welcome to the classic lemonade stand game!</p>
-                <p>Your mom gives you $10 to get started.</p>
-                <p>She also gives you 2 cups of sugar for free to help you begin.</p>
-                <p>Can you build a successful lemonade business?</p>
+                <p>Welcome to the classic lemonade stand game! Your mom gives you $10 and 2 free cups of sugar to start. Can you build a successful business?</p>
               </div>
               <button 
                 onClick={handleStartGame} 
@@ -271,12 +269,15 @@ export const App: React.FC = () => {
                   <p>Cash: ${appState.gameState.cash.toFixed(2)}</p>
                   <p>Weather: {appState.gameState.weather}</p>
                 </div>
-                <div className="ingredient-selection">
-                  <p>Ingredient selection interface will be implemented in future tasks...</p>
-                  <button onClick={() => setAppState(prev => ({ ...prev, phase: 'intro' }))}>
-                    Back to Intro
-                  </button>
-                </div>
+                <IngredientSelection 
+                  gameState={appState.gameState}
+                  onPurchase={(ingredients) => {
+                    console.log('Purchased ingredients:', ingredients);
+                    // TODO: Process purchase and move to next phase
+                    setAppState(prev => ({ ...prev, phase: 'intro' }));
+                  }}
+                  onBack={() => setAppState(prev => ({ ...prev, phase: 'intro' }))}
+                />
               </div>
             </div>
           )}
