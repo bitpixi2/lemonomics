@@ -546,6 +546,95 @@ export class APIServer {
       }
     });
 
+    // Devvit internal endpoints for menu actions and triggers
+    this.app.post('/internal/menu/create-game-post', async (req, res) => {
+      try {
+        const { reddit, context } = await import('@devvit/web/server');
+        
+        if (!context.subredditName) {
+          return res.status(400).json({
+            success: false,
+            error: 'Subreddit name is required',
+          });
+        }
+
+        const post = await reddit.submitCustomPost({
+          subredditName: context.subredditName,
+          title: '🍋 Lemonomics - Lemonade Stand Business Game',
+          splash: {
+            appDisplayName: 'Lemonomics',
+            buttonLabel: '🍋 Start Your Lemonade Business',
+            description: 'Build your lemonade empire! Buy ingredients, serve customers, and earn cash in this classic business simulation game.',
+            entryUri: 'index.html',
+            heading: 'Welcome to Lemonomics!',
+          },
+          postData: {
+            gameType: 'lemonade-stand',
+            version: '1.0.0',
+          },
+        });
+
+        console.log(`Created Lemonomics post: ${post.id} in r/${context.subredditName}`);
+
+        res.json({
+          success: true,
+          message: 'Game post created successfully',
+          postId: post.id,
+        });
+      } catch (error) {
+        console.error('Create game post error:', error);
+        res.status(500).json({
+          success: false,
+          error: 'Failed to create game post',
+        });
+      }
+    });
+
+    this.app.post('/internal/on-app-install', async (req, res) => {
+      try {
+        const { reddit, context } = await import('@devvit/web/server');
+        
+        if (!context.subredditName) {
+          return res.status(400).json({
+            success: false,
+            error: 'Subreddit name is required',
+          });
+        }
+
+        // Create a welcome post when the app is installed
+        const post = await reddit.submitCustomPost({
+          subredditName: context.subredditName,
+          title: '🍋 Welcome to Lemonomics! Your Lemonade Stand Awaits',
+          splash: {
+            appDisplayName: 'Lemonomics',
+            buttonLabel: '🍋 Start Playing Now',
+            description: 'The classic lemonade stand game is now available! Test your business skills and compete with other players.',
+            entryUri: 'index.html',
+            heading: 'Lemonomics is Ready!',
+          },
+          postData: {
+            gameType: 'lemonade-stand',
+            version: '1.0.0',
+            isWelcomePost: true,
+          },
+        });
+
+        console.log(`Created welcome post: ${post.id} in r/${context.subredditName}`);
+
+        res.json({
+          success: true,
+          message: 'Welcome post created successfully',
+          postId: post.id,
+        });
+      } catch (error) {
+        console.error('App install trigger error:', error);
+        res.status(500).json({
+          success: false,
+          error: 'Failed to create welcome post',
+        });
+      }
+    });
+
     // Error handling middleware
     this.app.use(
       (

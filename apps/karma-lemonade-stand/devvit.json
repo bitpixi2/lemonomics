@@ -1,9 +1,6 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
   "name": "lemonomics-game",
-  "version": "1.0.0",
-  "description": "Lemonomics - A Simple Reddit-Integrated Lemonade Stand Game",
-  "author": "u/bitpixi",
   "post": {
     "dir": "dist/client",
     "entrypoints": {
@@ -17,6 +14,20 @@
     "entry": "index.cjs"
   },
   "media": {
-    "dir": "public"
+    "dir": "public/assets"
+  },
+  "menu": {
+    "items": [
+      {
+        "label": "Create Lemonade Stand Game",
+        "description": "Start a new lemonade stand game post",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/create-game-post"
+      }
+    ]
+  },
+  "triggers": {
+    "onAppInstall": "/internal/on-app-install"
   }
 }
