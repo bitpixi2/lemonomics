@@ -563,6 +563,8 @@ export class APIServer {
           title: '🍋 Lemonomics - Lemonade Stand Business Game',
           splash: {
             appDisplayName: 'Lemonomics',
+            appIconUri: 'app-icon.svg',
+            backgroundUri: 'splash-background.svg',
             buttonLabel: '🍋 Start Your Business',
             description: 'The classic lemonade stand game! Buy ingredients, serve customers, and build your lemonade empire. Can you become the ultimate lemonade tycoon?',
             entryUri: 'index.html',
@@ -607,6 +609,8 @@ export class APIServer {
           title: '🍋 Welcome to Lemonomics! Your Lemonade Stand Awaits',
           splash: {
             appDisplayName: 'Lemonomics',
+            appIconUri: 'app-icon.svg',
+            backgroundUri: 'splash-background.svg',
             buttonLabel: '🍋 Play Lemonomics',
             description: 'The classic lemonade stand business simulation is now live! Buy ingredients, manage your stand, and compete with other entrepreneurs.',
             entryUri: 'index.html',
