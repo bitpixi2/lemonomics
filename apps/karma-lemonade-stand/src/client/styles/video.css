@@ -176,14 +176,15 @@
   transition: width 0.1s linear;
 }
 
-/* Video overlay UI styles */
+/* Video overlay UI styles - direct on video */
 .video-overlay {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   pointer-events: none;
+  z-index: 10;
 }
 
 .video-overlay.interactive {
@@ -191,16 +192,21 @@
 }
 
 .overlay-content {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(255, 255, 255, 0.95);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: none;
   padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  max-width: 400px;
-  width: 90%;
+  max-width: none;
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Screen-specific overlays */
@@ -726,61 +732,49 @@
   box-shadow: none;
 }
 
-/* Video container styles */
+/* Video container styles - full screen, no borders */
 .video-container {
-  position: relative;
-  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
   height: 100vh;
+  background: #000;
   overflow: hidden;
+  z-index: 1;
 }
 
 .intro-video,
 .ingredients-video {
-  width: 100%;
-  height: 100%;
-}
-
-/* Wide format video handling - fill height, crop sides on mobile */
-.video-element {
-  width: 100%;
+  width: 100vw;
   height: 100vh;
-  object-fit: cover;
+}
+
+/* Full screen video - fill 100% height, let width hang off edges */
+.video-element {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto;
+  height: 100vh;
+  min-width: 100vw;
+  object-fit: contain;
   object-position: center;
+  border: none;
+  outline: none;
 }
 
-/* Desktop: Full screen videos */
-@media (min-width: 769px) {
-  .video-element {
-    object-fit: cover; /* Fill entire screen */
-    width: 100vw;
-    height: 100vh;
-  }
-
-  .video-container {
-    width: 100vw;
-    height: 100vh;
-  }
-}
-
-/* Mobile: Fill height, crop left/right sides */
-@media (max-width: 768px) {
-  .video-element {
-    object-fit: cover; /* Fill height, crop sides */
-    object-position: center;
-    width: 100vw;
-    height: 100vh; /* Fill full height */
-  }
-
-  .video-container {
-    width: 100vw;
-    height: 100vh;
-    background: #000;
-  }
-
-  .video-player {
-    width: 100%;
-    height: 100vh;
-  }
+.video-player {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  overflow: hidden;
+  border: none;
+  outline: none;
 }
 
 /* Loading states */
@@ -899,6 +893,260 @@
     font-size: 1.2rem;
   }
 }
+/* Ingredient Selection Overlay Styles */
+.ingredient-selection {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 30px;
+  border-radius: 15px;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.ingredient-selection h3 {
+  color: #FFD700;
+  margin-bottom: 15px;
+  font-size: 1.6rem;
+  text-align: center;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.weather-info {
+  background: rgba(135, 206, 235, 0.3);
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  font-weight: bold;
+  text-align: center;
+  color: #87CEEB;
+}
+
+.ingredient-list {
+  margin-bottom: 20px;
+}
+
+.ingredient-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.ingredient-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ingredient-name {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: white;
+}
+
+.ingredient-price {
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quantity-btn {
+  background: #32CD32;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.quantity-btn:hover:not(:disabled) {
+  background: #228B22;
+}
+
+.quantity-btn:disabled {
+  background: #666;
+  cursor: not-allowed;
+}
+
+.quantity-input {
+  width: 60px;
+  padding: 6px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: bold;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.ingredient-cost {
+  font-weight: bold;
+  color: #32CD32;
+  min-width: 60px;
+  text-align: right;
+}
+
+.current-inventory {
+  background: rgba(255, 215, 0, 0.2);
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  border: 2px solid rgba(255, 215, 0, 0.5);
+}
+
+.current-inventory h4 {
+  margin-bottom: 8px;
+  color: #FFD700;
+}
+
+.current-inventory p {
+  margin: 4px 0;
+  font-weight: bold;
+  color: white;
+}
+
+.cost-summary {
+  background: rgba(255, 215, 0, 0.2);
+  padding: 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+  border: 2px solid rgba(255, 215, 0, 0.5);
+}
+
+.cost-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: white;
+}
+
+.cost-row.remaining-cash {
+  border-top: 2px solid #FFD700;
+  padding-top: 8px;
+  margin-top: 12px;
+  font-size: 1.1rem;
+}
+
+.affordable {
+  color: #32CD32;
+}
+
+.too-expensive {
+  color: #DC143C;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.purchase-button {
+  flex: 2;
+  background: #32CD32;
+  color: white;
+  border: none;
+  padding: 15px 20px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.purchase-button:hover:not(:disabled) {
+  background: #228B22;
+}
+
+.purchase-button:disabled {
+  background: #666;
+  cursor: not-allowed;
+}
+
+.back-button {
+  flex: 1;
+  background: #FF6B35;
+  color: white;
+  border: none;
+  padding: 15px 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.back-button:hover {
+  background: #E55A2B;
+}
+
+/* Developer Mode Styles */
+.developer-mode-message {
+  background: rgba(255, 165, 0, 0.2);
+  color: #FFA500;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  border: 1px solid rgba(255, 165, 0, 0.5);
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.daily-limit-message {
+  background: rgba(0, 100, 200, 0.2);
+  color: #87CEEB;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  border: 2px solid rgba(135, 206, 235, 0.5);
+  text-align: center;
+}
+
+.daily-limit-message h3 {
+  color: #87CEEB;
+  margin-bottom: 10px;
+}
+
+.view-leaderboard-button {
+  flex: 1;
+  background: #4169E1;
+  color: white;
+  border: none;
+  padding: 15px 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.view-leaderboard-button:hover {
+  background: #1E4DB8;
+}
+
 /* Audio Control Styles */
 .audio-control {
   position: fixed;

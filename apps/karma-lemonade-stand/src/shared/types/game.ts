@@ -58,6 +58,9 @@ export interface GameSession {
   dailyResults: DayResult[];
   isActive: boolean;
   totalDaysPlayed: number;
+  lastPlayedRealDate: string; // ISO date string of last real day played
+  canPlayToday: boolean; // Whether user can play today
+  nextPlayDate: string; // ISO date string of when they can play next
 }
 
 export interface RedditUserData {

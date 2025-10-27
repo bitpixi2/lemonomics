@@ -9,6 +9,8 @@ export class GameSessionManager {
    */
   createSession(userId: string): GameSession {
     const sessionId = this.generateSessionId();
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    
     const session: GameSession = {
       userId,
       sessionId,
@@ -22,7 +24,10 @@ export class GameSessionManager {
       },
       dailyResults: [],
       isActive: true,
-      totalDaysPlayed: 0
+      totalDaysPlayed: 0,
+      lastPlayedRealDate: '', // No previous play date for new session
+      canPlayToday: true, // New players can always play their first day
+      nextPlayDate: today // Can play today
     };
 
     this.sessions.set(sessionId, session);
@@ -216,6 +221,65 @@ export class GameSessionManager {
       sugar: 0.25,
       cups: 0.10
     };
+  }
+
+  /**
+   * Check if a player can play today (real-day restriction)
+   */
+  canPlayToday(sessionId: string, username?: string): { canPlay: boolean; nextPlayDate?: string; hoursUntilNext?: number; isDeveloper?: boolean } {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      return { canPlay: false };
+    }
+
+    // Developer bypass for u/bitpixi - can always play for testing
+    const isDeveloper = username === 'bitpixi' || username === 'u/bitpixi';
+    if (isDeveloper) {
+      return { canPlay: true, isDeveloper: true };
+    }
+
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    // If they haven't played today, they can play
+    if (session.lastPlayedRealDate !== today) {
+      return { canPlay: true };
+    }
+
+    // They already played today, calculate when they can play next
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    
+    // Calculate hours until tomorrow
+    const now = new Date();
+    const tomorrowMidnight = new Date(tomorrow);
+    tomorrowMidnight.setHours(0, 0, 0, 0);
+    const hoursUntilNext = Math.ceil((tomorrowMidnight.getTime() - now.getTime()) / (1000 * 60 * 60));
+
+    return { 
+      canPlay: false, 
+      nextPlayDate: tomorrowStr,
+      hoursUntilNext 
+    };
+  }
+
+  /**
+   * Update session to mark that a day was played today
+   */
+  markDayPlayed(sessionId: string): void {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      return;
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+    session.lastPlayedRealDate = today;
+    session.canPlayToday = false;
+    session.nextPlayDate = tomorrowStr;
   }
 
   /**

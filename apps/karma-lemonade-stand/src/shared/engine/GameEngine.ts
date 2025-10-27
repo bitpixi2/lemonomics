@@ -92,28 +92,12 @@ export class LemonadeGameEngine implements GameEngine {
     const finalCash = finalSession.cash;
     const totalDays = finalSession.totalDaysPlayed;
 
-    // For now, return mock leaderboard data
-    // In a real implementation, this would query the database
-    const mockLeaderboard: LeaderboardEntry[] = [
-      { rank: 1, username: 'LemonadeKing', finalCash: 50.00, daysPlayed: 7, timestamp: new Date() },
-      { rank: 2, username: 'CitrusQueen', finalCash: 45.50, daysPlayed: 6, timestamp: new Date() },
-      { rank: 3, username: 'SugarRush', finalCash: 42.25, daysPlayed: 8, timestamp: new Date() },
-    ];
-
-    // Determine player's position (mock calculation)
-    let leaderboardPosition = mockLeaderboard.length + 1;
-    for (let i = 0; i < mockLeaderboard.length; i++) {
-      if (finalCash > mockLeaderboard[i].finalCash) {
-        leaderboardPosition = i + 1;
-        break;
-      }
-    }
-
+    // Return real leaderboard data (will be fetched from API)
     return {
       finalCash,
       totalDays,
-      leaderboardPosition,
-      leaderboard: mockLeaderboard
+      leaderboardPosition: 1, // Will be calculated by the API
+      leaderboard: [] // Will be populated by the API call
     };
   }
 

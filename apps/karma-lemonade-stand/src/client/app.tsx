@@ -19,6 +19,13 @@ interface AppState {
   videoPreloader?: VideoPreloader;
   videoSequencer?: VideoSequencer;
   gameAudio?: GameAudio;
+  sessionId?: string;
+  dayResults?: {
+    cupsSold: number;
+    revenue: number;
+    profit: number;
+    expenses: number;
+  };
 }
 
 export const App: React.FC = () => {
@@ -232,6 +239,27 @@ export const App: React.FC = () => {
               >
                 {appState.isLoading ? 'Starting...' : 'Start Game'}
               </button>
+              
+              {/* Developer mode toggle (hidden button) */}
+              <button 
+                onClick={() => {
+                  const isDev = localStorage.getItem('isDeveloper') === 'true';
+                  localStorage.setItem('isDeveloper', (!isDev).toString());
+                  alert(isDev ? 'Developer mode disabled' : 'Developer mode enabled - Real-day restrictions disabled');
+                }}
+                style={{ 
+                  position: 'absolute', 
+                  bottom: '10px', 
+                  right: '10px', 
+                  opacity: 0.1, 
+                  fontSize: '10px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'gray'
+                }}
+              >
+                Dev
+              </button>
             </>
           )}
         </div>
@@ -273,14 +301,258 @@ export const App: React.FC = () => {
                   gameState={appState.gameState}
                   onPurchase={(ingredients) => {
                     console.log('Purchased ingredients:', ingredients);
-                    // TODO: Process purchase and move to next phase
-                    setAppState(prev => ({ ...prev, phase: 'intro' }));
+                    
+                    // Update game state with purchased ingredients
+                    const updatedGameState = {
+                      ...appState.gameState!,
+                      inventory: {
+                        lemons: appState.gameState!.inventory.lemons + ingredients.lemons,
+                        sugar: appState.gameState!.inventory.sugar + ingredients.sugar,
+                        cups: appState.gameState!.inventory.cups + ingredients.cups,
+                      },
+                      cash: appState.gameState!.cash - (
+                        ingredients.lemons * 0.50 + 
+                        ingredients.sugar * 0.25 + 
+                        ingredients.cups * 0.10
+                      )
+                    };
+
+                    // Move to loading results phase
+                    setAppState(prev => ({ 
+                      ...prev, 
+                      gameState: updatedGameState,
+                      phase: 'loading-results' 
+                    }));
+
+                    // Start loading results video sequence
+                    if (appState.videoSequencer) {
+                      const loadingSequence = appState.videoSequencer.createLoadingSequence(updatedGameState.weather);
+                      appState.videoSequencer.startSequence(loadingSequence);
+                    }
+
+                    // Calculate real day results after 3 seconds using game engine
+                    setTimeout(async () => {
+                      try {
+                        // Call the real game engine API to play the day
+                        const dayInput = {
+                          lemons: ingredients.lemons,
+                          sugar: ingredients.sugar, 
+                          cups: ingredients.cups,
+                          pricePerCup: 0.75 // Default price, could be made configurable
+                        };
+
+                        const response = await fetch('/api/end-day', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({
+                            sessionId: 'current-session', // TODO: Use real session ID
+                            dayInput,
+                            weather: updatedGameState.weather
+                          }),
+                        });
+
+                        const result = await response.json();
+                        
+                        if (result.success && result.dayResult) {
+                          const realResults = {
+                            cupsSold: result.dayResult.cupsSold,
+                            revenue: result.dayResult.revenue,
+                            profit: result.dayResult.profit,
+                            expenses: result.dayResult.expenses
+                          };
+
+                          setAppState(prev => ({ 
+                            ...prev, 
+                            phase: 'results',
+                            dayResults: realResults,
+                            gameState: {
+                              ...updatedGameState,
+                              cash: result.totalCash || updatedGameState.cash
+                            }
+                          }));
+                        } else {
+                          // Fallback to simple calculation if API fails
+                          const fallbackResults = {
+                            cupsSold: Math.min(ingredients.cups, Math.floor(Math.random() * 15) + 5),
+                            revenue: 0,
+                            profit: 0,
+                            expenses: ingredients.lemons * 0.50 + ingredients.sugar * 0.25 + ingredients.cups * 0.10
+                          };
+                          fallbackResults.revenue = fallbackResults.cupsSold * 0.75;
+                          fallbackResults.profit = fallbackResults.revenue - fallbackResults.expenses;
+
+                          setAppState(prev => ({ 
+                            ...prev, 
+                            phase: 'results',
+                            dayResults: fallbackResults
+                          }));
+                        }
+
+                        // Start results video
+                        if (appState.videoSequencer) {
+                          const resultsSequence = appState.videoSequencer.createResultsSequence(updatedGameState.weather);
+                          appState.videoSequencer.startSequence(resultsSequence);
+                        }
+                      } catch (error) {
+                        console.error('Failed to calculate day results:', error);
+                        // Fallback to simple calculation
+                        const fallbackResults = {
+                          cupsSold: Math.min(ingredients.cups, Math.floor(Math.random() * 15) + 5),
+                          revenue: 0,
+                          profit: 0,
+                          expenses: ingredients.lemons * 0.50 + ingredients.sugar * 0.25 + ingredients.cups * 0.10
+                        };
+                        fallbackResults.revenue = fallbackResults.cupsSold * 0.75;
+                        fallbackResults.profit = fallbackResults.revenue - fallbackResults.expenses;
+
+                        setAppState(prev => ({ 
+                          ...prev, 
+                          phase: 'results',
+                          dayResults: fallbackResults
+                        }));
+                      }
+                    }, 3000);
                   }}
                   onBack={() => setAppState(prev => ({ ...prev, phase: 'intro' }))}
                 />
               </div>
             </div>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  // Loading results phase - show loading video
+  if (appState.phase === 'loading-results' && appState.gameState && appState.videoPreloader) {
+    const currentStep = appState.videoSequencer?.getCurrentStep();
+    
+    return (
+      <div className="app">
+        <AudioControl className="audio-control-loading" />
+        <div className="video-container">
+          {currentStep && (
+            <VideoPlayer
+              videoAsset={currentStep.video}
+              preloader={appState.videoPreloader}
+              onVideoError={handleVideoError}
+              className="loading-video"
+              autoplay={true}
+              controls={false}
+              muted={false}
+              loop={false}
+            />
+          )}
+          
+          <div className="video-overlay">
+            <div className="loading-message">
+              <h2>🍋 Selling Lemonade...</h2>
+              <p>Customers are coming to your stand!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Results phase - show results video with overlay
+  if (appState.phase === 'results' && appState.gameState && appState.dayResults && appState.videoPreloader) {
+    const currentStep = appState.videoSequencer?.getCurrentStep();
+    
+    return (
+      <div className="app">
+        <AudioControl className="audio-control-results" />
+        <div className="video-container">
+          {currentStep && (
+            <VideoPlayer
+              videoAsset={currentStep.video}
+              preloader={appState.videoPreloader}
+              onVideoError={handleVideoError}
+              className="results-video"
+              autoplay={true}
+              controls={false}
+              muted={false}
+              loop={true}
+            />
+          )}
+          
+          <div className="video-overlay interactive">
+            <div className="results-overlay">
+              <h2>🍋 Day {appState.gameState.day} Results</h2>
+              <div className="results-summary">
+                <div className="result-item">
+                  <span>Cups Sold:</span>
+                  <span>{appState.dayResults.cupsSold}</span>
+                </div>
+                <div className="result-item">
+                  <span>Revenue:</span>
+                  <span>${appState.dayResults.revenue.toFixed(2)}</span>
+                </div>
+                <div className="result-item">
+                  <span>Expenses:</span>
+                  <span>-${appState.dayResults.expenses.toFixed(2)}</span>
+                </div>
+                <div className="result-item profit">
+                  <span>Profit:</span>
+                  <span>${appState.dayResults.profit.toFixed(2)}</span>
+                </div>
+                <div className="result-item total">
+                  <span>Total Cash:</span>
+                  <span>${(appState.gameState.cash + appState.dayResults.profit).toFixed(2)}</span>
+                </div>
+              </div>
+              
+              <div className="results-actions">
+                {/* Check if user is developer (bitpixi) for testing */}
+                {window.location.href.includes('bitpixi') || localStorage.getItem('isDeveloper') === 'true' ? (
+                  <>
+                    <div className="developer-mode-message">
+                      <p>🔧 Developer Mode: Real-day restrictions disabled</p>
+                    </div>
+                    <button 
+                      className="next-day-button"
+                      onClick={() => {
+                        // Update cash and move to next day (developer mode)
+                        const updatedGameState = {
+                          ...appState.gameState!,
+                          cash: appState.gameState!.cash + appState.dayResults!.profit,
+                          day: appState.gameState!.day + 1
+                        };
+                        setAppState(prev => ({ 
+                          ...prev, 
+                          gameState: updatedGameState,
+                          phase: 'ingredients',
+                          dayResults: undefined
+                        }));
+                      }}
+                    >
+                      Next Day (Dev Mode)
+                    </button>
+                  </>
+                ) : (
+                  <div className="daily-limit-message">
+                    <h3>🌙 That's all for today!</h3>
+                    <p>Come back tomorrow to continue your lemonade business.</p>
+                    <p>Your progress has been saved.</p>
+                  </div>
+                )}
+                <button 
+                  className="view-leaderboard-button"
+                  onClick={() => setAppState(prev => ({ ...prev, phase: 'leaderboard' }))}
+                >
+                  View Leaderboard
+                </button>
+                <button 
+                  className="restart-button"
+                  onClick={() => setAppState(prev => ({ ...prev, phase: 'intro' }))}
+                >
+                  Start New Game
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
