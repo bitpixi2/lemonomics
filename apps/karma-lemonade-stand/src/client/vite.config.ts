@@ -1,34 +1,20 @@
 import { defineConfig } from 'vite';
-import { resolve } from 'path';
+import tailwind from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 
+// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
-  root: resolve(__dirname),
+  plugins: [react(), tailwind()],
   build: {
     outDir: '../../dist/client',
-    emptyOutDir: true,
+    sourcemap: true,
     rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'index.html')
-      }
+      output: {
+        entryFileNames: '[name].js',
+        chunkFileNames: '[name].js',
+        assetFileNames: '[name][extname]',
+        sourcemapFileNames: '[name].js.map',
+      },
     },
-    assetsDir: 'assets',
-    copyPublicDir: true
   },
-  publicDir: '../../public',
-  resolve: {
-    alias: {
-      '@shared': resolve(__dirname, '../shared')
-    }
-  },
-  server: {
-    port: 3000,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true
-      }
-    }
-  }
 });

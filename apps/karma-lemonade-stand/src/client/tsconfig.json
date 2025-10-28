@@ -1,20 +1,21 @@
+// TypeScript config for all web view main thread code.
 {
-  "extends": "../../../../tools/tsconfig-base.json",
+  "extends": "../../tools/tsconfig-base.json",
   "compilerOptions": {
-    "composite": true,
-    "outDir": "../../dist/client",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    // Target the browser.
+    "customConditions": ["browser"],
+
+    "lib": ["DOM", "ES2023", "esnext.disposable"],
+
+    "outDir": "../../dist/types/client",
+
+    // React
     "jsx": "react-jsx",
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "types": ["react", "react-dom"]
+
+    "tsBuildInfoFile": "../../dist/client/tsconfig.tsbuildinfo"
   },
-  "include": ["**/*"],
-  "exclude": ["node_modules", "dist"],
-  "references": [
-    { "path": "../shared" }
-  ]
+  // https://github.com/Microsoft/TypeScript/issues/25636
+  "include": ["**/*", "**/*.json"],
+  "exclude": ["**/*.test.ts"],
+  "references": [{ "path": "../shared" }]
 }

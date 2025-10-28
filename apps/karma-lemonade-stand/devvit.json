@@ -23,11 +23,14 @@
         "description": "Start a new lemonade stand game post",
         "location": "subreddit",
         "forUserType": "moderator",
-        "endpoint": "/internal/menu/create-game-post"
+        "endpoint": "/internal/menu/post-create"
       }
     ]
   },
   "triggers": {
     "onAppInstall": "/internal/on-app-install"
+  },
+  "dev": {
+    "subreddit": "lemonomics_game_dev"
   }
 }

@@ -1,29 +1,24 @@
 import { defineConfig } from 'vite';
-import { resolve } from 'path';
+import { builtinModules } from 'node:module';
 
 export default defineConfig({
+  ssr: {
+    noExternal: true,
+  },
   build: {
-    lib: {
-      entry: resolve(__dirname, 'index.ts'),
-      name: 'server',
-      fileName: 'index',
-      formats: ['cjs']
-    },
+    emptyOutDir: false,
+    ssr: 'index.ts',
     outDir: '../../dist/server',
-    emptyOutDir: true,
+    target: 'node22',
+    sourcemap: true,
     rollupOptions: {
-      external: ['@devvit/web', 'express'],
+      external: [...builtinModules],
+
       output: {
         format: 'cjs',
-        entryFileNames: 'index.cjs'
-      }
+        entryFileNames: 'index.cjs',
+        inlineDynamicImports: true,
+      },
     },
-    target: 'node18',
-    ssr: true
   },
-  resolve: {
-    alias: {
-      '@shared': resolve(__dirname, '../shared')
-    }
-  }
 });
