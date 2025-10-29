@@ -39,6 +39,14 @@ interface LeaderboardEntry {
   lastUpdated: string;
 }
 
+interface Recipe {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+  category: 'lemonade' | 'dessert';
+}
+
 interface DayResult {
   glassesSold: number;
   income: number;
@@ -47,7 +55,7 @@ interface DayResult {
   specialEvent?: string;
 }
 
-type GamePhase = 'intro' | 'dayBriefing' | 'setup' | 'results' | 'gameOver';
+type GamePhase = 'intro' | 'dayBriefing' | 'setup' | 'results' | 'recipeBreak' | 'gameOver';
 
 export const App: React.FC = () => {
   const [phase, setPhase] = useState<GamePhase>('intro');
@@ -79,6 +87,8 @@ export const App: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [currentTrack, setCurrentTrack] = useState<'theme' | 'halloween'>('theme');
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [currentRecipe, setCurrentRecipe] = useState<Recipe | null>(null);
+  const [recipeRating, setRecipeRating] = useState<number>(0);
 
   const fetchKarmaBoost = async () => {
     try {
@@ -139,6 +149,38 @@ export const App: React.FC = () => {
     }
   };
 
+  // Hardcoded recipes for now
+  const RECIPES: Recipe[] = [
+    {
+      id: 'strawberry-lemonade',
+      title: 'Fresh Strawberry Lemonade',
+      description:
+        'Sweet strawberries meet tart lemons in this refreshing summer drink. Perfect for hot days!',
+      url: 'https://www.allrecipes.com/recipe/32385/strawberry-lemonade/',
+      category: 'lemonade',
+    },
+    {
+      id: 'lemon-cupcakes',
+      title: 'Fluffy Lemon Cupcakes',
+      description:
+        'Light, airy cupcakes bursting with lemon flavor and topped with cream cheese frosting.',
+      url: 'https://www.foodnetwork.com/recipes/alton-brown/lemon-cupcakes-recipe-1946783',
+      category: 'dessert',
+    },
+    {
+      id: 'lavender-lemonade',
+      title: 'Lavender Honey Lemonade',
+      description: 'A floral twist on classic lemonade with calming lavender and sweet honey.',
+      url: 'https://www.bonappetit.com/recipe/lavender-lemonade',
+      category: 'lemonade',
+    },
+  ];
+
+  const getRecipeForDay = (day: number): Recipe => {
+    const index = day % RECIPES.length;
+    return RECIPES[index]!; // Non-null assertion since we know index is valid
+  };
+
   // Audio initialization and control
   useEffect(() => {
     // Initialize with theme music by default
@@ -155,23 +197,22 @@ export const App: React.FC = () => {
 
   // Function to load and switch audio tracks
   const loadAudioTrack = (track: 'theme' | 'halloween') => {
-    const trackPath = track === 'theme' 
-      ? '/lemonomics-theme-music.mp3' 
-      : '/lemonomics-halloween.mp3';
-    
+    const trackPath =
+      track === 'theme' ? '/lemonomics-theme-music.mp3' : '/lemonomics-halloween.mp3';
+
     // Store current playback state
     const wasPlaying = audioRef.current && !audioRef.current.paused;
-    
+
     // Stop current audio if playing
     if (audioRef.current) {
       audioRef.current.pause();
     }
-    
+
     // Load new track
     audioRef.current = new Audio(trackPath);
     audioRef.current.loop = true;
     audioRef.current.volume = 0.3;
-    
+
     // Add event listeners
     audioRef.current.addEventListener('canplay', () => {
       console.log(`${track} music loaded successfully!`);
@@ -180,11 +221,11 @@ export const App: React.FC = () => {
         audioRef.current?.play().catch(console.error);
       }
     });
-    
+
     audioRef.current.addEventListener('error', (e) => {
       console.error(`${track} music error:`, e);
     });
-    
+
     setCurrentTrack(track);
   };
 
@@ -193,7 +234,7 @@ export const App: React.FC = () => {
     if (phase === 'dayBriefing' || phase === 'setup' || phase === 'results') {
       const shouldPlayHalloween = gameState.weather !== 'sunny';
       const targetTrack = shouldPlayHalloween ? 'halloween' : 'theme';
-      
+
       if (currentTrack !== targetTrack) {
         console.log(`Switching to ${targetTrack} music for ${gameState.weather} weather`);
         loadAudioTrack(targetTrack);
@@ -463,7 +504,16 @@ export const App: React.FC = () => {
     }));
 
     setInputs({ glasses: '', sugar: '', signs: '', price: '' });
-    setPhase('dayBriefing');
+
+    // Show Recipe Break every 3 days
+    if (nextDayNumber % 3 === 0) {
+      const recipe = getRecipeForDay(nextDayNumber);
+      setCurrentRecipe(recipe);
+      setRecipeRating(0);
+      setPhase('recipeBreak');
+    } else {
+      setPhase('dayBriefing');
+    }
   };
 
   const getWeatherIcon = (weather: string) => {
@@ -500,32 +550,36 @@ export const App: React.FC = () => {
   const AudioControlButton = () => {
     const borderColor = currentTrack === 'halloween' ? 'border-orange-500' : 'border-yellow-400';
     const iconColor = currentTrack === 'halloween' ? 'text-orange-600' : 'text-yellow-600';
-    
+
     return (
       <button
         onClick={toggleMute}
         className={`fixed top-4 right-4 z-40 bg-white/90 hover:bg-white border-2 ${borderColor} rounded-full p-3 shadow-lg transition-all duration-200 hover:scale-110`}
-        title={isMuted ? 'Unmute music' : `Mute music (${currentTrack === 'theme' ? 'Theme' : 'Halloween'} track)`}
+        title={
+          isMuted
+            ? 'Unmute music'
+            : `Mute music (${currentTrack === 'theme' ? 'Theme' : 'Halloween'} track)`
+        }
       >
-      {isMuted ? (
-        <svg className="w-6 h-6 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-          <path
-            fillRule="evenodd"
-            d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.793L4.617 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.617l3.766-3.793a1 1 0 011.617.793zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.983 5.983 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.984 3.984 0 00-1.172-2.828 1 1 0 010-1.415z"
-            clipRule="evenodd"
-          />
-          <path d="M3 3l14 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      ) : (
-        <svg className={`w-6 h-6 ${iconColor}`} fill="currentColor" viewBox="0 0 20 20">
-          <path
-            fillRule="evenodd"
-            d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.793L4.617 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.617l3.766-3.793a1 1 0 011.617.793zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.983 5.983 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.984 3.984 0 00-1.172-2.828 1 1 0 010-1.415z"
-            clipRule="evenodd"
-          />
-        </svg>
-      )}
-    </button>
+        {isMuted ? (
+          <svg className="w-6 h-6 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fillRule="evenodd"
+              d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.793L4.617 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.617l3.766-3.793a1 1 0 011.617.793zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.983 5.983 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.984 3.984 0 00-1.172-2.828 1 1 0 010-1.415z"
+              clipRule="evenodd"
+            />
+            <path d="M3 3l14 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        ) : (
+          <svg className={`w-6 h-6 ${iconColor}`} fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fillRule="evenodd"
+              d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.793L4.617 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.617l3.766-3.793a1 1 0 011.617.793zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.983 5.983 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.984 3.984 0 00-1.172-2.828 1 1 0 010-1.415z"
+              clipRule="evenodd"
+            />
+          </svg>
+        )}
+      </button>
     );
   };
 
@@ -701,7 +755,7 @@ export const App: React.FC = () => {
                   <div key={i} className="w-3 h-3 bg-gray-300 rounded-full"></div>
                 ))}
               </div>
-              
+
               {/* Notepad Content */}
               <div className="p-8 pl-20 pr-8">
                 {/* Header with handwritten style */}
@@ -719,7 +773,9 @@ export const App: React.FC = () => {
                 <div className="space-y-6">
                   {/* Recipe Section */}
                   <div className="transform -rotate-1">
-                    <h3 className="text-xl font-bold text-green-700 mb-4 font-mono">🍋 Today's Recipe:</h3>
+                    <h3 className="text-xl font-bold text-green-700 mb-4 font-mono">
+                      🍋 Today's Recipe:
+                    </h3>
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="block text-lg font-semibold text-gray-800 font-mono">
@@ -730,16 +786,19 @@ export const App: React.FC = () => {
                           min="0"
                           max="1000"
                           value={inputs.glasses}
-                          onChange={(e) => setInputs((prev) => ({ ...prev, glasses: e.target.value }))}
+                          onChange={(e) =>
+                            setInputs((prev) => ({ ...prev, glasses: e.target.value }))
+                          }
                           className="w-full p-3 text-xl border-b-2 border-blue-400 bg-transparent focus:border-blue-600 focus:outline-none font-mono transform rotate-1"
                           placeholder="0"
-                          style={{ 
+                          style={{
                             background: 'linear-gradient(transparent 90%, #e0f2fe 90%)',
-                            backgroundSize: '100% 1.5em'
+                            backgroundSize: '100% 1.5em',
                           }}
                         />
                         <p className="text-sm text-gray-600 font-mono">
-                          @ ${lemonCost.toFixed(2)} each = ${((parseInt(inputs.glasses) || 0) * lemonCost).toFixed(2)}
+                          @ ${lemonCost.toFixed(2)} each = $
+                          {((parseInt(inputs.glasses) || 0) * lemonCost).toFixed(2)}
                         </p>
                       </div>
 
@@ -753,12 +812,14 @@ export const App: React.FC = () => {
                             min="0"
                             max="1000"
                             value={inputs.sugar}
-                            onChange={(e) => setInputs((prev) => ({ ...prev, sugar: e.target.value }))}
+                            onChange={(e) =>
+                              setInputs((prev) => ({ ...prev, sugar: e.target.value }))
+                            }
                             className="w-full p-3 text-xl border-b-2 border-blue-400 bg-transparent focus:border-blue-600 focus:outline-none font-mono transform rotate-1"
                             placeholder="0"
-                            style={{ 
+                            style={{
                               background: 'linear-gradient(transparent 90%, #e0f2fe 90%)',
-                              backgroundSize: '100% 1.5em'
+                              backgroundSize: '100% 1.5em',
                             }}
                           />
                           <p className="text-sm text-gray-600 font-mono">
@@ -771,7 +832,9 @@ export const App: React.FC = () => {
 
                   {/* Marketing Section */}
                   <div className="transform rotate-1">
-                    <h3 className="text-xl font-bold text-purple-700 mb-4 font-mono">📢 Marketing & Pricing:</h3>
+                    <h3 className="text-xl font-bold text-purple-700 mb-4 font-mono">
+                      📢 Marketing & Pricing:
+                    </h3>
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="block text-lg font-semibold text-gray-800 font-mono">
@@ -782,12 +845,14 @@ export const App: React.FC = () => {
                           min="0"
                           max="50"
                           value={inputs.signs}
-                          onChange={(e) => setInputs((prev) => ({ ...prev, signs: e.target.value }))}
+                          onChange={(e) =>
+                            setInputs((prev) => ({ ...prev, signs: e.target.value }))
+                          }
                           className="w-full p-3 text-xl border-b-2 border-blue-400 bg-transparent focus:border-blue-600 focus:outline-none font-mono transform -rotate-1"
                           placeholder="0"
-                          style={{ 
+                          style={{
                             background: 'linear-gradient(transparent 90%, #e0f2fe 90%)',
-                            backgroundSize: '100% 1.5em'
+                            backgroundSize: '100% 1.5em',
                           }}
                         />
                         <p className="text-sm text-gray-600 font-mono">
@@ -804,12 +869,14 @@ export const App: React.FC = () => {
                           min="0"
                           max="100"
                           value={inputs.price}
-                          onChange={(e) => setInputs((prev) => ({ ...prev, price: e.target.value }))}
+                          onChange={(e) =>
+                            setInputs((prev) => ({ ...prev, price: e.target.value }))
+                          }
                           className="w-full p-3 text-xl border-b-2 border-blue-400 bg-transparent focus:border-blue-600 focus:outline-none font-mono transform -rotate-1"
                           placeholder="10"
-                          style={{ 
+                          style={{
                             background: 'linear-gradient(transparent 90%, #e0f2fe 90%)',
-                            backgroundSize: '100% 1.5em'
+                            backgroundSize: '100% 1.5em',
                           }}
                         />
                         <p className="text-sm text-gray-600 font-mono">
@@ -821,14 +888,17 @@ export const App: React.FC = () => {
 
                   {/* Budget Summary */}
                   <div className="transform -rotate-1 bg-yellow-50 p-4 rounded-lg border-2 border-dashed border-yellow-400">
-                    <h3 className="text-xl font-bold text-orange-700 mb-3 font-mono">💰 Budget Summary:</h3>
+                    <h3 className="text-xl font-bold text-orange-700 mb-3 font-mono">
+                      💰 Budget Summary:
+                    </h3>
                     <div className="grid grid-cols-2 gap-4 text-lg font-mono">
                       <div>
                         <p className="text-gray-700">
                           <strong>Total Cost:</strong>
                         </p>
                         <p className="text-2xl font-bold text-red-600">
-                          ${(
+                          $
+                          {(
                             (parseInt(inputs.glasses) || 0) * lemonCost +
                             (parseInt(inputs.sugar) || 0) * (gameState.day >= 3 ? 0.02 : 0) +
                             (parseInt(inputs.signs) || 0) * 0.15
@@ -839,15 +909,19 @@ export const App: React.FC = () => {
                         <p className="text-gray-700">
                           <strong>Money Left:</strong>
                         </p>
-                        <p className={`text-2xl font-bold ${
-                          gameState.assets -
-                            ((parseInt(inputs.glasses) || 0) * lemonCost +
-                              (parseInt(inputs.sugar) || 0) * (gameState.day >= 3 ? 0.02 : 0) +
-                              (parseInt(inputs.signs) || 0) * 0.15) < 0
-                            ? 'text-red-600'
-                            : 'text-green-600'
-                        }`}>
-                          ${(
+                        <p
+                          className={`text-2xl font-bold ${
+                            gameState.assets -
+                              ((parseInt(inputs.glasses) || 0) * lemonCost +
+                                (parseInt(inputs.sugar) || 0) * (gameState.day >= 3 ? 0.02 : 0) +
+                                (parseInt(inputs.signs) || 0) * 0.15) <
+                            0
+                              ? 'text-red-600'
+                              : 'text-green-600'
+                          }`}
+                        >
+                          $
+                          {(
                             gameState.assets -
                             ((parseInt(inputs.glasses) || 0) * lemonCost +
                               (parseInt(inputs.sugar) || 0) * (gameState.day >= 3 ? 0.02 : 0) +
@@ -864,7 +938,7 @@ export const App: React.FC = () => {
                       onClick={playDay}
                       className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 px-8 rounded-full text-xl shadow-lg transform hover:scale-105 transition-all duration-200 font-mono"
                     >
-                      🏪 Open My Lemonade Stand! 🍋
+                      🏪 Open Stand!
                     </button>
                   </div>
                 </div>
@@ -952,17 +1026,15 @@ export const App: React.FC = () => {
                           index === 0
                             ? 'bg-yellow-200 border border-yellow-400'
                             : index === 1
-                            ? 'bg-gray-100 border border-gray-300'
-                            : 'bg-orange-100 border border-orange-300'
+                              ? 'bg-gray-100 border border-gray-300'
+                              : 'bg-orange-100 border border-orange-300'
                         }`}
                       >
                         <div className="flex items-center space-x-2">
                           <span className="text-lg font-bold">
                             {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
                           </span>
-                          <span className="font-semibold text-gray-800">
-                            {player.username}
-                          </span>
+                          <span className="font-semibold text-gray-800">{player.username}</span>
                         </div>
                         <div className="text-right text-sm">
                           <div className="font-bold text-green-600">
@@ -988,6 +1060,96 @@ export const App: React.FC = () => {
                 }`}
               >
                 {gameState.bankrupt ? 'Game Over 😢' : `Continue to Day ${gameState.day + 1} ➡️`}
+              </button>
+            </div>
+          </div>
+        </div>
+        <FlairNotificationModal />
+      </>
+    );
+  }
+
+  if (phase === 'recipeBreak' && currentRecipe) {
+    const openModMail = () => {
+      const subject = encodeURIComponent('Recipe Submission');
+      const body = encodeURIComponent(`Recipe Link: 
+
+(Just paste a link to your favorite lemon recipe from AllRecipes, Food Network, etc. We'll handle the rest!)
+
+Optional - Your own recipe:
+Title: 
+Description: 
+Ingredients: 
+Instructions: `);
+
+      window.open(
+        `https://www.reddit.com/message/compose/?to=/r/Lemonomics&subject=${subject}&message=${body}`,
+        '_blank'
+      );
+    };
+
+    return (
+      <>
+        <div className="min-h-screen bg-gradient-to-b from-yellow-100 to-orange-100 p-4 flex items-center justify-center">
+          <AudioControlButton />
+          <div className="w-full max-w-lg mx-auto">
+            <div className="bg-white rounded-lg shadow-xl p-6 text-center">
+              <h2 className="text-2xl font-bold text-orange-700 mb-4">
+                🍋 Recipe Break - Day {gameState.day}
+              </h2>
+
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg p-4 mb-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-2">
+                  {currentRecipe.category === 'lemonade' ? '🥤' : '🧁'} {currentRecipe.title}
+                </h3>
+                <p className="text-gray-700 mb-4">{currentRecipe.description}</p>
+                <a
+                  href={currentRecipe.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm"
+                >
+                  View Full Recipe →
+                </a>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-gray-700 mb-3">How would you rate this recipe?</p>
+                <div className="flex justify-center space-x-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => setRecipeRating(star)}
+                      className={`text-3xl transition-colors ${
+                        star <= recipeRating ? 'text-yellow-400' : 'text-gray-300'
+                      } hover:text-yellow-400`}
+                    >
+                      ⭐
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {recipeRating === 5 && (
+                <div className="bg-green-50 border border-green-300 rounded-lg p-4 mb-4">
+                  <p className="text-green-800 font-semibold mb-2">🌟 You loved this recipe!</p>
+                  <p className="text-green-700 text-sm mb-3">
+                    Share your own lemon recipe with the community!
+                  </p>
+                  <button
+                    onClick={openModMail}
+                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm"
+                  >
+                    📨 Share Your Recipe
+                  </button>
+                </div>
+              )}
+
+              <button
+                onClick={() => setPhase('dayBriefing')}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-lg"
+              >
+                Continue to Day {gameState.day} →
               </button>
             </div>
           </div>
