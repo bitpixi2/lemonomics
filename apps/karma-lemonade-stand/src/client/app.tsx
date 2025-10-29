@@ -171,6 +171,7 @@ export const App: React.FC = () => {
 
   const calculateSales = (
     glasses: number,
+    sugar: number,
     signs: number,
     price: number,
     weather: string
@@ -196,12 +197,27 @@ export const App: React.FC = () => {
     // Sign effects (advertising)
     const signEffect = 1 - Math.exp(-signs * 0.5);
 
+    // Sugar quality effects (after day 3)
+    let sugarQuality = 1;
+    if (gameState.day >= 3 && glasses > 0) {
+      const sugarRatio = sugar / glasses;
+      if (sugarRatio >= 1) {
+        sugarQuality = 1; // Perfect sweetness
+      } else if (sugarRatio >= 0.5) {
+        sugarQuality = 0.8; // Slightly less sweet
+      } else if (sugarRatio > 0) {
+        sugarQuality = 0.6; // Not sweet enough
+      } else {
+        sugarQuality = 0.4; // No sugar - very poor quality
+      }
+    }
+
     // Apply karma boost to demand
     const karmaMultiplier = karmaBoost.multiplier;
 
-    // Calculate final demand with karma boost
+    // Calculate final demand with karma boost and sugar quality
     const finalDemand = Math.floor(
-      demand * (priceEffect / 30) * (1 + signEffect) * karmaMultiplier
+      demand * (priceEffect / 30) * (1 + signEffect) * karmaMultiplier * sugarQuality
     );
 
     // Can't sell more than you made
@@ -229,10 +245,13 @@ export const App: React.FC = () => {
     const sugarCost = gameState.day >= 3 ? 0.02 : 0; // 2¢ per unit after day 3
     const totalCost = glasses * lemonCost + sugar * sugarCost + signs * 0.15;
     
-    // Validate sugar requirement after day 3
-    if (gameState.day >= 3 && sugar < glasses) {
-      alert(`You need at least ${glasses} units of sugar to make ${glasses} glasses of lemonade!`);
-      return;
+    // Sugar is optional but recommended after day 3
+    // Allow players to make lemonade with less sugar (affects quality but doesn't block)
+    if (gameState.day >= 3 && glasses > 0 && sugar === 0) {
+      const proceed = confirm(`Warning: Making ${glasses} glasses without sugar will result in poor quality lemonade and fewer sales. Continue anyway?`);
+      if (!proceed) {
+        return;
+      }
     }
 
     // Validate inputs
@@ -291,7 +310,7 @@ export const App: React.FC = () => {
       }
     }
 
-    const result = calculateSales(glasses, signs, price, gameState.weather);
+    const result = calculateSales(glasses, sugar, signs, price, gameState.weather);
 
     // Apply special event effects
     const adjustedResult = {
