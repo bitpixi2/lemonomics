@@ -7,10 +7,11 @@
         "@devvit/mcp"
       ],
       "disabled": false,
-      "disabledTools": [],
       "autoApprove": [
-        "devvit_search"
-      ]
+        "devvit_search",
+        "devvit_logs"
+      ],
+      "disabledTools": []
     },
     "reddit-mcp": {
       "command": "uvx",

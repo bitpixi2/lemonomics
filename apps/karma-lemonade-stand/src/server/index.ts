@@ -91,6 +91,127 @@ router.post<{ postId: string }, DecrementResponse | { status: string; message: s
   }
 );
 
+// Flair reward configuration
+const FLAIR_REWARDS = [
+  {
+    day: 10,
+    flairId: '2b6eecf8-b254-11f0-8c08-226f6c7bd5e2',
+    name: 'Lemon Apprentice',
+    description: 'Mastered the basics of the lemonade business'
+  },
+  {
+    day: 20,
+    flairId: '7844575c-b254-11f0-8b2d-d62f5c13ad44',
+    name: 'Citrus Tycoon',
+    description: 'A true entrepreneur with serious business skills'
+  },
+  {
+    day: 30,
+    flairId: 'a776e332-b254-11f0-8d07-9eb8e1ecefd1',
+    name: 'Global Lemonade Hero',
+    description: 'Conquered the lemonade world!'
+  }
+];
+
+// Check and award flair based on game progress
+router.post('/api/check-flair', async (req, res): Promise<void> => {
+  try {
+    const { currentDay } = req.body as { currentDay: number };
+    const { userId, subredditName } = context;
+    
+    if (!userId || !subredditName) {
+      res.json({
+        type: 'flair-check',
+        awarded: false,
+        message: 'User context not available'
+      });
+      return;
+    }
+
+    // Find the highest flair reward the user qualifies for
+    const qualifiedReward = FLAIR_REWARDS
+      .filter(reward => currentDay >= reward.day)
+      .sort((a, b) => b.day - a.day)[0]; // Get the highest day reward
+
+    if (!qualifiedReward) {
+      const nextReward = FLAIR_REWARDS.find(reward => currentDay < reward.day);
+      const nextDay = nextReward ? nextReward.day : 30;
+      res.json({
+        type: 'flair-check',
+        awarded: false,
+        message: `Keep playing! Next reward at Day ${nextDay}`
+      });
+      return;
+    }
+
+    // Check if user already has this flair
+    const flairCacheKey = `flair:${userId}:${qualifiedReward.day}`;
+    const alreadyAwarded = await redis.get(flairCacheKey);
+    
+    if (alreadyAwarded) {
+      res.json({
+        type: 'flair-check',
+        awarded: false,
+        flair: qualifiedReward,
+        message: `You already have the ${qualifiedReward.name} flair!`
+      });
+      return;
+    }
+
+    // Award the flair
+    try {
+      // Only award flair in r/Lemonomics
+      if (subredditName.toLowerCase() === 'lemonomics') {
+        const currentUsername = await reddit.getCurrentUsername();
+        if (!currentUsername) {
+          throw new Error('Unable to get current username');
+        }
+        
+        await reddit.setUserFlair({
+          subredditName: 'Lemonomics',
+          username: currentUsername,
+          flairTemplateId: qualifiedReward.flairId
+        });
+
+        // Mark as awarded in cache
+        await redis.set(flairCacheKey, 'awarded');
+
+        res.json({
+          type: 'flair-check',
+          awarded: true,
+          flair: qualifiedReward,
+          message: `🎉 Congratulations! You've earned the ${qualifiedReward.name} flair in r/Lemonomics!`
+        });
+      } else {
+        // Still mark progress but explain flair is only in r/Lemonomics
+        await redis.set(flairCacheKey, 'awarded');
+        
+        res.json({
+          type: 'flair-check',
+          awarded: true,
+          flair: qualifiedReward,
+          message: `🎉 Achievement unlocked: ${qualifiedReward.name}! Visit r/Lemonomics to see your flair.`
+        });
+      }
+    } catch (flairError) {
+      console.error('Error awarding flair:', flairError);
+      res.json({
+        type: 'flair-check',
+        awarded: false,
+        flair: qualifiedReward,
+        message: `Achievement reached but flair award failed. Contact moderators in r/Lemonomics.`
+      });
+    }
+  } catch (error) {
+    console.error('Flair check error:', error);
+    res.json({
+      type: 'flair-check',
+      awarded: false,
+      message: 'Error checking flair eligibility'
+    });
+  }
+});
+
 // Karma boost endpoint for lemonade game
 router.get('/api/karma-boost', async (_req, res): Promise<void> => {
   try {
@@ -125,13 +246,13 @@ router.get('/api/karma-boost', async (_req, res): Promise<void> => {
     let description = 'No karma boost';
     
     if (totalKarma >= 5000) {
-      multiplier = 1.5;
+      multiplier = 2.0;
       level = 'legendary';
-      description = '🏆 Legendary Redditor: 1.5x sales boost!';
+      description = '🏆 Legendary Redditor: 2x sales boost!';
     } else if (totalKarma >= 1000) {
-      multiplier = 1.3;
+      multiplier = 1.5;
       level = 'veteran';
-      description = '⭐ Veteran Redditor: 1.3x sales boost!';
+      description = '⭐ Veteran Redditor: 1.5x sales boost!';
     } else if (totalKarma >= 300) {
       multiplier = 1.15;
       level = 'active';
@@ -148,7 +269,7 @@ router.get('/api/karma-boost', async (_req, res): Promise<void> => {
     };
 
     // Cache for 1 hour (3600 seconds)
-    await redis.setEx(cacheKey, 3600, JSON.stringify(karmaData));
+    await redis.set(cacheKey, JSON.stringify(karmaData), { expiration: new Date(Date.now() + 3600000) });
 
     res.json(karmaData);
   } catch (error) {

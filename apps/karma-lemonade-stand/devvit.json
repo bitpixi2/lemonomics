@@ -30,6 +30,12 @@
   "triggers": {
     "onAppInstall": "/internal/on-app-install"
   },
+  "permissions": {
+    "redis": true,
+    "reddit": {
+      "enable": true
+    }
+  },
   "dev": {
     "subreddit": "lemonomics_game_dev"
   }
