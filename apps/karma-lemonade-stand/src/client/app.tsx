@@ -106,41 +106,24 @@ export const App: React.FC = () => {
 
   // Audio initialization and control
   useEffect(() => {
-    const tryAudioPaths = [
-      './lemonomics-theme-music.mp3',
-      '/lemonomics-theme-music.mp3',
-      '/media/lemonomics-theme-music.mp3',
-      '/assets/lemonomics-theme-music.mp3',
-      '../assets/lemonomics-theme-music.mp3'
-    ];
+    // Initialize audio - assets should now be copied to the build output
+    audioRef.current = new Audio('/lemonomics-theme-music.mp3');
+    audioRef.current.loop = true;
+    audioRef.current.volume = 0.3; // Set to 30% volume for background music
     
-    let currentPathIndex = 0;
+    // Add error handling and logging
+    audioRef.current.addEventListener('loadstart', () => {
+      console.log('Audio loading started');
+    });
     
-    const tryNextPath = () => {
-      if (currentPathIndex >= tryAudioPaths.length) {
-        console.error('All audio paths failed');
-        return;
-      }
-      
-      const path = tryAudioPaths[currentPathIndex];
-      console.log(`Trying audio path: ${path}`);
-      
-      audioRef.current = new Audio(path);
-      audioRef.current.loop = true;
-      audioRef.current.volume = 0.3;
-      
-      audioRef.current.addEventListener('canplay', () => {
-        console.log(`Audio loaded successfully from: ${path}`);
-      });
-      
-      audioRef.current.addEventListener('error', (e) => {
-        console.error(`Audio failed to load from: ${path}`, e);
-        currentPathIndex++;
-        tryNextPath();
-      });
-    };
+    audioRef.current.addEventListener('canplay', () => {
+      console.log('Audio can play - theme music loaded successfully!');
+    });
     
-    tryNextPath();
+    audioRef.current.addEventListener('error', (e) => {
+      console.error('Audio error:', e);
+      console.error('Audio error details:', audioRef.current?.error);
+    });
 
     // Cleanup on unmount
     return () => {
