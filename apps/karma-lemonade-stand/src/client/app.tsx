@@ -70,6 +70,7 @@ export const App: React.FC = () => {
   const [flairNotification, setFlairNotification] = useState<FlairCheckResponse | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [currentTrack, setCurrentTrack] = useState<'theme' | 'halloween'>('theme');
 
   const fetchKarmaBoost = async () => {
     try {
@@ -106,24 +107,8 @@ export const App: React.FC = () => {
 
   // Audio initialization and control
   useEffect(() => {
-    // Initialize audio - assets should now be copied to the build output
-    audioRef.current = new Audio('/lemonomics-theme-music.mp3');
-    audioRef.current.loop = true;
-    audioRef.current.volume = 0.3; // Set to 30% volume for background music
-    
-    // Add error handling and logging
-    audioRef.current.addEventListener('loadstart', () => {
-      console.log('Audio loading started');
-    });
-    
-    audioRef.current.addEventListener('canplay', () => {
-      console.log('Audio can play - theme music loaded successfully!');
-    });
-    
-    audioRef.current.addEventListener('error', (e) => {
-      console.error('Audio error:', e);
-      console.error('Audio error details:', audioRef.current?.error);
-    });
+    // Initialize with theme music by default
+    loadAudioTrack('theme');
 
     // Cleanup on unmount
     return () => {
@@ -133,6 +118,54 @@ export const App: React.FC = () => {
       }
     };
   }, []);
+
+  // Function to load and switch audio tracks
+  const loadAudioTrack = (track: 'theme' | 'halloween') => {
+    const trackPath = track === 'theme' 
+      ? '/lemonomics-theme-music.mp3' 
+      : '/lemonomics-halloween.mp3';
+    
+    // Store current playback state
+    const wasPlaying = audioRef.current && !audioRef.current.paused;
+    
+    // Stop current audio if playing
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    
+    // Load new track
+    audioRef.current = new Audio(trackPath);
+    audioRef.current.loop = true;
+    audioRef.current.volume = 0.3;
+    
+    // Add event listeners
+    audioRef.current.addEventListener('canplay', () => {
+      console.log(`${track} music loaded successfully!`);
+      // Resume playback if it was playing before
+      if (wasPlaying && !isMuted) {
+        audioRef.current?.play().catch(console.error);
+      }
+    });
+    
+    audioRef.current.addEventListener('error', (e) => {
+      console.error(`${track} music error:`, e);
+    });
+    
+    setCurrentTrack(track);
+  };
+
+  // Effect to switch music based on weather
+  useEffect(() => {
+    if (phase === 'dayBriefing' || phase === 'setup' || phase === 'results') {
+      const shouldPlayHalloween = gameState.weather !== 'sunny';
+      const targetTrack = shouldPlayHalloween ? 'halloween' : 'theme';
+      
+      if (currentTrack !== targetTrack) {
+        console.log(`Switching to ${targetTrack} music for ${gameState.weather} weather`);
+        loadAudioTrack(targetTrack);
+      }
+    }
+  }, [gameState.weather, phase, currentTrack]);
 
   const toggleMute = () => {
     if (audioRef.current) {
@@ -420,12 +453,16 @@ export const App: React.FC = () => {
   };
 
   // Audio control button
-  const AudioControlButton = () => (
-    <button
-      onClick={toggleMute}
-      className="fixed top-4 right-4 z-40 bg-white/90 hover:bg-white border-2 border-yellow-400 rounded-full p-3 shadow-lg transition-all duration-200 hover:scale-110"
-      title={isMuted ? 'Unmute music' : 'Mute music'}
-    >
+  const AudioControlButton = () => {
+    const borderColor = currentTrack === 'halloween' ? 'border-orange-500' : 'border-yellow-400';
+    const iconColor = currentTrack === 'halloween' ? 'text-orange-600' : 'text-yellow-600';
+    
+    return (
+      <button
+        onClick={toggleMute}
+        className={`fixed top-4 right-4 z-40 bg-white/90 hover:bg-white border-2 ${borderColor} rounded-full p-3 shadow-lg transition-all duration-200 hover:scale-110`}
+        title={isMuted ? 'Unmute music' : `Mute music (${currentTrack === 'theme' ? 'Theme' : 'Halloween'} track)`}
+      >
       {isMuted ? (
         <svg className="w-6 h-6 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
           <path
@@ -436,7 +473,7 @@ export const App: React.FC = () => {
           <path d="M3 3l14 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
       ) : (
-        <svg className="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+        <svg className={`w-6 h-6 ${iconColor}`} fill="currentColor" viewBox="0 0 20 20">
           <path
             fillRule="evenodd"
             d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.793L4.617 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.617l3.766-3.793a1 1 0 011.617.793zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.983 5.983 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.984 3.984 0 00-1.172-2.828 1 1 0 010-1.415z"
@@ -445,7 +482,8 @@ export const App: React.FC = () => {
         </svg>
       )}
     </button>
-  );
+    );
+  };
 
   // Flair notification modal
   const FlairNotificationModal = () => {
