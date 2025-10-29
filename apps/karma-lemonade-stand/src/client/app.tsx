@@ -477,6 +477,7 @@ export const App: React.FC = () => {
   };
 
   const nextDay = async () => {
+    // Handle bankruptcy - go directly to game over
     if (gameState.bankrupt) {
       setPhase('gameOver');
       return;
@@ -1006,9 +1007,20 @@ export const App: React.FC = () => {
               </div>
 
               {gameState.bankrupt ? (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                  <p className="font-bold">💸 You're bankrupt!</p>
-                  <p>You don't have enough money to continue in business.</p>
+                <div className="bg-red-500 text-white px-6 py-4 rounded-lg mb-4 text-center border-4 border-red-600 shadow-lg">
+                  <div className="text-4xl mb-2">💸</div>
+                  <p className="font-bold text-xl mb-2">BANKRUPTCY!</p>
+                  <p className="text-red-100 mb-2">
+                    You don't have enough money to continue in business.
+                  </p>
+                  <p className="text-sm text-red-200">
+                    You need at least ${getLemonCost(gameState.day + 1).toFixed(2)} to make lemonade for tomorrow.
+                  </p>
+                  <div className="mt-3 p-2 bg-red-600 rounded">
+                    <p className="text-xs text-red-100">
+                      💡 Tip: Try making fewer glasses or charging higher prices to stay profitable!
+                    </p>
+                  </div>
                 </div>
               ) : null}
 
@@ -1197,19 +1209,53 @@ Instructions: `);
               </div>
             ) : (
               <div>
-                <p className="text-gray-700 mb-4">
-                  {gameState.bankrupt
-                    ? 'You went bankrupt!'
-                    : `You lasted ${gameState.day} day${gameState.day !== 1 ? 's' : ''} in the lemonade business!`}
-                </p>
-                <p className="text-lg font-semibold mb-6">
-                  Final Assets: ${gameState.assets.toFixed(2)}
-                </p>
+                {gameState.bankrupt ? (
+                  <div className="mb-6">
+                    <div className="text-6xl mb-4">💸</div>
+                    <p className="text-xl font-bold text-red-600 mb-2">BANKRUPTCY!</p>
+                    <p className="text-gray-700 mb-4">
+                      You ran out of money on Day {gameState.day} and couldn't continue your lemonade business.
+                    </p>
+                    <div className="bg-red-50 border border-red-200 p-4 rounded-lg mb-4">
+                      <p className="text-sm text-red-800 mb-2">
+                        <strong>What went wrong?</strong>
+                      </p>
+                      <ul className="text-xs text-red-700 space-y-1">
+                        <li>• You didn't have enough money to buy lemonade mix for the next day</li>
+                        <li>• Try making fewer glasses or charging higher prices</li>
+                        <li>• Watch the weather - rainy days mean fewer customers</li>
+                        <li>• Don't spend too much on signs early in the game</li>
+                      </ul>
+                    </div>
+                    <p className="text-lg font-semibold text-red-600">
+                      Final Assets: ${gameState.assets.toFixed(2)}
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-gray-700 mb-4">
+                      You lasted {gameState.day} day{gameState.day !== 1 ? 's' : ''} in the lemonade business!
+                    </p>
+                    <p className="text-lg font-semibold mb-6">
+                      Final Assets: ${gameState.assets.toFixed(2)}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
             <button
-              onClick={() => {
+              onClick={async () => {
+                // Reset player data in Redis
+                try {
+                  await fetch('/api/reset-player', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                  });
+                } catch (error) {
+                  console.error('Failed to reset player data:', error);
+                }
+
                 setPhase('intro');
                 setGameState({
                   day: 0,

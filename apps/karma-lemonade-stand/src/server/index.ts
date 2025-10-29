@@ -165,6 +165,41 @@ router.post('/api/update-progress', async (req, res): Promise<void> => {
   }
 });
 
+// Reset player data (for bankruptcy/restart)
+router.post('/api/reset-player', async (_req, res): Promise<void> => {
+  try {
+    const { userId } = context;
+
+    if (!userId) {
+      res.status(400).json({
+        status: 'error',
+        message: 'User ID required',
+      });
+      return;
+    }
+
+    // Remove player from leaderboard
+    await redis.zRem('leaderboard', [userId]);
+    
+    // Remove player data
+    const playerKey = `player:${userId}`;
+    await redis.del(playerKey);
+
+    console.log(`🔄 Reset player data for user: ${userId}`);
+
+    res.json({
+      status: 'success',
+      message: 'Player data reset successfully',
+    });
+  } catch (error) {
+    console.error('Reset player error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to reset player data',
+    });
+  }
+});
+
 // Process recipe submissions from ModMail (called by Kiro hook)
 router.post('/api/process-recipes', async (_req, res): Promise<void> => {
   try {
