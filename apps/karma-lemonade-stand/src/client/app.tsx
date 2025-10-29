@@ -92,7 +92,7 @@ export const App: React.FC = () => {
         },
         body: JSON.stringify({ currentDay }),
       });
-      
+
       if (response.ok) {
         const data: FlairCheckResponse = await response.json();
         if (data.awarded) {
@@ -106,11 +106,42 @@ export const App: React.FC = () => {
 
   // Audio initialization and control
   useEffect(() => {
-    // Initialize audio
-    audioRef.current = new Audio('/lemonomics-theme-music.mp3');
-    audioRef.current.loop = true;
-    audioRef.current.volume = 0.3; // Set to 30% volume for background music
+    const tryAudioPaths = [
+      './lemonomics-theme-music.mp3',
+      '/lemonomics-theme-music.mp3',
+      '/media/lemonomics-theme-music.mp3',
+      '/assets/lemonomics-theme-music.mp3',
+      '../assets/lemonomics-theme-music.mp3'
+    ];
     
+    let currentPathIndex = 0;
+    
+    const tryNextPath = () => {
+      if (currentPathIndex >= tryAudioPaths.length) {
+        console.error('All audio paths failed');
+        return;
+      }
+      
+      const path = tryAudioPaths[currentPathIndex];
+      console.log(`Trying audio path: ${path}`);
+      
+      audioRef.current = new Audio(path);
+      audioRef.current.loop = true;
+      audioRef.current.volume = 0.3;
+      
+      audioRef.current.addEventListener('canplay', () => {
+        console.log(`Audio loaded successfully from: ${path}`);
+      });
+      
+      audioRef.current.addEventListener('error', (e) => {
+        console.error(`Audio failed to load from: ${path}`, e);
+        currentPathIndex++;
+        tryNextPath();
+      });
+    };
+    
+    tryNextPath();
+
     // Cleanup on unmount
     return () => {
       if (audioRef.current) {
@@ -244,11 +275,13 @@ export const App: React.FC = () => {
     const lemonCost = getLemonCost(gameState.day);
     const sugarCost = gameState.day >= 3 ? 0.02 : 0; // 2¢ per unit after day 3
     const totalCost = glasses * lemonCost + sugar * sugarCost + signs * 0.15;
-    
+
     // Sugar is optional but recommended after day 3
     // Allow players to make lemonade with less sugar (affects quality but doesn't block)
     if (gameState.day >= 3 && glasses > 0 && sugar === 0) {
-      const proceed = confirm(`Warning: Making ${glasses} glasses without sugar will result in poor quality lemonade and fewer sales. Continue anyway?`);
+      const proceed = confirm(
+        `Warning: Making ${glasses} glasses without sugar will result in poor quality lemonade and fewer sales. Continue anyway?`
+      );
       if (!proceed) {
         return;
       }
@@ -357,7 +390,7 @@ export const App: React.FC = () => {
     }
 
     const nextDayNumber = gameState.day + 1;
-    
+
     // Check for flair rewards at milestone days
     if (nextDayNumber === 10 || nextDayNumber === 20 || nextDayNumber === 30) {
       await checkForFlairReward(nextDayNumber);
@@ -412,12 +445,20 @@ export const App: React.FC = () => {
     >
       {isMuted ? (
         <svg className="w-6 h-6 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.793L4.617 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.617l3.766-3.793a1 1 0 011.617.793zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.983 5.983 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.984 3.984 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+          <path
+            fillRule="evenodd"
+            d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.793L4.617 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.617l3.766-3.793a1 1 0 011.617.793zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.983 5.983 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.984 3.984 0 00-1.172-2.828 1 1 0 010-1.415z"
+            clipRule="evenodd"
+          />
           <path d="M3 3l14 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
       ) : (
         <svg className="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.793L4.617 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.617l3.766-3.793a1 1 0 011.617.793zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.983 5.983 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.984 3.984 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+          <path
+            fillRule="evenodd"
+            d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.793L4.617 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.617l3.766-3.793a1 1 0 011.617.793zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.983 5.983 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.984 3.984 0 00-1.172-2.828 1 1 0 010-1.415z"
+            clipRule="evenodd"
+          />
         </svg>
       )}
     </button>
@@ -437,9 +478,7 @@ export const App: React.FC = () => {
               <h3 className="text-lg font-semibold text-gray-800">
                 {flairNotification.flair.name}
               </h3>
-              <p className="text-sm text-gray-600 mb-2">
-                {flairNotification.flair.description}
-              </p>
+              <p className="text-sm text-gray-600 mb-2">{flairNotification.flair.description}</p>
             </div>
           )}
           <p className="text-gray-700 mb-6">{flairNotification.message}</p>
@@ -603,20 +642,26 @@ export const App: React.FC = () => {
                   // After day 3: 4-column grid with sugar
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Glasses</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Glasses
+                      </label>
                       <input
                         type="number"
                         min="0"
                         max="1000"
                         value={inputs.glasses}
-                        onChange={(e) => setInputs((prev) => ({ ...prev, glasses: e.target.value }))}
+                        onChange={(e) =>
+                          setInputs((prev) => ({ ...prev, glasses: e.target.value }))
+                        }
                         className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                         placeholder="0"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Sugar (2¢)</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Sugar (2¢)
+                      </label>
                       <input
                         type="number"
                         min="0"
@@ -642,7 +687,9 @@ export const App: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Price (¢)</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Price (¢)
+                      </label>
                       <input
                         type="number"
                         min="0"
@@ -658,13 +705,17 @@ export const App: React.FC = () => {
                   // Before day 3: 3-column grid without sugar
                   <div className="grid grid-cols-3 gap-2">
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Glasses</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Glasses
+                      </label>
                       <input
                         type="number"
                         min="0"
                         max="1000"
                         value={inputs.glasses}
-                        onChange={(e) => setInputs((prev) => ({ ...prev, glasses: e.target.value }))}
+                        onChange={(e) =>
+                          setInputs((prev) => ({ ...prev, glasses: e.target.value }))
+                        }
                         className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                         placeholder="0"
                       />
@@ -684,7 +735,9 @@ export const App: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Price (¢)</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Price (¢)
+                      </label>
                       <input
                         type="number"
                         min="0"
@@ -846,7 +899,9 @@ export const App: React.FC = () => {
         >
           <AudioControlButton />
           <div className="bg-white rounded-lg shadow-xl p-8 max-w-md text-center">
-            <h1 className={`text-3xl font-bold mb-4 ${isWinner ? 'text-green-600' : 'text-red-600'}`}>
+            <h1
+              className={`text-3xl font-bold mb-4 ${isWinner ? 'text-green-600' : 'text-red-600'}`}
+            >
               {isWinner ? '🎉 Congratulations!' : '💸 Game Over'}
             </h1>
 
