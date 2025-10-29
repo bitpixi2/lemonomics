@@ -32,6 +32,13 @@ interface FlairCheckResponse {
   message: string;
 }
 
+interface LeaderboardEntry {
+  username: string;
+  day: number;
+  assets: number;
+  lastUpdated: string;
+}
+
 interface DayResult {
   glassesSold: number;
   income: number;
@@ -71,6 +78,7 @@ export const App: React.FC = () => {
   const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [currentTrack, setCurrentTrack] = useState<'theme' | 'halloween'>('theme');
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 
   const fetchKarmaBoost = async () => {
     try {
@@ -102,6 +110,32 @@ export const App: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to check flair reward:', error);
+    }
+  };
+
+  const updateProgress = async (day: number, assets: number) => {
+    try {
+      await fetch('/api/update-progress', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ day, assets }),
+      });
+    } catch (error) {
+      console.error('Failed to update progress:', error);
+    }
+  };
+
+  const fetchLeaderboard = async () => {
+    try {
+      const response = await fetch('/api/leaderboard');
+      if (response.ok) {
+        const data = await response.json();
+        setLeaderboard(data.topPlayers || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch leaderboard:', error);
     }
   };
 
@@ -166,6 +200,13 @@ export const App: React.FC = () => {
       }
     }
   }, [gameState.weather, phase, currentTrack]);
+
+  // Fetch leaderboard when showing results
+  useEffect(() => {
+    if (phase === 'results') {
+      fetchLeaderboard();
+    }
+  }, [phase]);
 
   const toggleMute = () => {
     if (audioRef.current) {
@@ -387,6 +428,9 @@ export const App: React.FC = () => {
       price,
       bankrupt: isBankrupt,
     }));
+
+    // Update progress in leaderboard
+    updateProgress(gameState.day, newAssets);
 
     setPhase('results');
   };
@@ -893,6 +937,47 @@ export const App: React.FC = () => {
                   <p>You don't have enough money to continue in business.</p>
                 </div>
               ) : null}
+
+              {/* Leaderboard */}
+              {leaderboard.length > 0 && (
+                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg p-4 mb-4">
+                  <h3 className="font-bold text-lg mb-3 text-center text-orange-700">
+                    🏆 Top Entrepreneurs
+                  </h3>
+                  <div className="space-y-2">
+                    {leaderboard.map((player, index) => (
+                      <div
+                        key={player.username}
+                        className={`flex items-center justify-between p-2 rounded ${
+                          index === 0
+                            ? 'bg-yellow-200 border border-yellow-400'
+                            : index === 1
+                            ? 'bg-gray-100 border border-gray-300'
+                            : 'bg-orange-100 border border-orange-300'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <span className="text-lg font-bold">
+                            {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                          </span>
+                          <span className="font-semibold text-gray-800">
+                            {player.username}
+                          </span>
+                        </div>
+                        <div className="text-right text-sm">
+                          <div className="font-bold text-green-600">
+                            ${player.assets.toFixed(2)}
+                          </div>
+                          <div className="text-gray-600">Day {player.day}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 text-center mt-2">
+                    Live leaderboard updates every day!
+                  </p>
+                </div>
+              )}
 
               <button
                 onClick={nextDay}

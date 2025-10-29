@@ -35,3 +35,20 @@ export type GameProgressRequest = {
   currentDay: number;
   totalProfit: number;
 };
+
+export type LeaderboardEntry = {
+  username: string;
+  day: number;
+  assets: number;
+  lastUpdated: string;
+};
+
+export type LeaderboardResponse = {
+  type: 'leaderboard';
+  topPlayers: LeaderboardEntry[];
+};
+
+export type UpdateProgressRequest = {
+  day: number;
+  assets: number;
+};

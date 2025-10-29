@@ -1,12 +1,12 @@
-# 🍋 Lemonomics - The Ultimate Lemonade Stand Empire
+# 🍋 Lemonomics - Lemonade Stand
 
 ```
     ╔══════════════════════════════════════════════════════════════╗
     ║                                                              ║
-    ║    🍋🍋🍋  L E M O N O M I C S  🍋🍋🍋                      ║
+    ║    🍋🍋🍋  L E M O N O M I C S  🍋🍋🍋                         ║
     ║                                                              ║
     ║         ┌─────────────────────────────────────┐              ║
-    ║         │  💰 Turn Lemons Into PROFIT! 💰    │              ║
+    ║         │  💰 Turn Lemons Into PROFIT! 💰    │                ║
     ║         │                                     │              ║
     ║         │    🏪 Build Your Lemonade Empire    │              ║
     ║         │    📈 Master Supply & Demand        │              ║
@@ -29,6 +29,20 @@ Remember the legendary Apple II lemonade stand game? We've brought it back with 
          Input                Business              Output
 ```
 
+## 🏗️ Technical Architecture
+
+```
+    📱 CLIENT (React)     🔄 API LAYER      🗄️ SERVER (Node.js)
+    ┌─────────────────┐   ┌─────────────┐   ┌──────────────────┐
+    │ 🎮 Game Logic   │◄──┤ /api/karma  │──►│ 🎯 Reddit API    │
+    │ 🎨 UI Components│   │ /api/health │   │ 📊 Redis Cache   │
+    │ 📱 Mobile First │   │ /api/...    │   │ 🔧 Game Engine   │
+    └─────────────────┘   └─────────────┘   └──────────────────┘
+           │                      │                     │
+           ▼                      ▼                     ▼
+    🌈 Tailwind CSS      ⚡ Express.js        🏪 Devvit Platform
+```
+
 ### 🌟 What Makes This Special?
 
 - **🎯 Reddit Integration**: Your karma = sales multiplier!
@@ -41,7 +55,7 @@ Remember the legendary Apple II lemonade stand game? We've brought it back with 
 
 **Ready to build your lemonade empire?** Join the community and start playing:
 
-**[🍋 Play on r/Lemonomics](https://reddit.com/r/Lemonomics)** | **[📚 View Source](https://github.com/bitpixi2/lemonomics)** | **[🐛 Report Issues](https://github.com/bitpixi2/lemonomics/issues)**
+**[🍋 Play on r/Lemonomics](https://reddit.com/r/Lemonomics)** 
 
 _When life gives you lemons, make a profitable business!_ 🍋💰✨
 
@@ -133,7 +147,7 @@ Your Reddit reputation directly impacts your lemonade business!
     💰 Assets       💵 Pricing         💸 Expenses     🔄 Repeat
 ```
 
-### � Sktep-by-Step Guide
+### � Step-by-Step Guide
 
 1. **🌅 Day Briefing**: Check weather, assets, and special events
 2. **🏪 Setup Stand**: Choose ingredients, signs, and pricing
@@ -152,21 +166,15 @@ Your Reddit reputation directly impacts your lemonade business!
     ╚════════════════════════════════════════════════════╝
 ```
 
-This project was a **journey of discovery** through the Devvit ecosystem:
-
-#### 🔧 The Tech Stack That Made It Possible
+#### 🔧 The Kiro Dev Environment That Made It Possible
 
 - **🎯 Devvit Hooks**: For Reddit integration magic
 - **🔌 MCP Server**: Model Context Protocol goodness
-- **⚛️ React**: Because modern UI rocks
-- **📚 Start Docs**: The foundation that saved us
-
-#### 💜 The Kiro Dev Aesthetic That Truly Kept Me Going
-
+- **📚 Reddit Start Docs**: The foundation that saved me, after I had to nuke and restart the day before
 - **[Hacker Sounds](https://marketplace.visualstudio.com/items?itemName=mattogodoy.hacker-sounds)** by mattogodoy - The _click click tap tap_ that kept me motivated!
 - **[Amethyst Kiss Themes Pack](https://marketplace.visualstudio.com/items?itemName=MahdiBehkar.amethyst-kiss-themes-pack)** by MahdiBehkar - Those gorgeous purple vibes!
 
-_I love this about Kiro - they have extensions that transform your development environment into whatever aesthetic inspires you! That and Kiro's little ghost face made up for all the really frustrating times (Who could be mad at that little face?) _ ✨
+I love this about Kiro - they have extensions that transform your development environment into whatever aesthetic inspires you! That and Kiro's little ghost face made up for all the really frustrating bugs like the play button not working to accept, spec tasks getting stuck, and documents ignored (Who could be mad at that little ghosty face?) ✨
 
 ### 🎬 The Ambitious Vision That Almost Was
 
@@ -176,7 +184,7 @@ Originally, this game was **much more ambitious**! The initial vision included:
     🎵 AUDIO & IMMERSION 🎵
     ├─ Rich soundscapes and festival music
     ├─ Dynamic audio feedback for every action
-    └─ Custom sound effects for weather changes
+    └─ Custom ElevenLabs sound effects for weather changes
 
     🎪 FESTIVAL EVENTS & CUSTOMIZATION 🎪
     ├─ Seasonal festivals with special bonuses
@@ -201,67 +209,30 @@ Originally, this game was **much more ambitious**! The initial vision included:
 
 **But it was all too ambitious and ultimately wouldn't run.** 😅
 
-The complexity became overwhelming, performance suffered, and the core fun got lost in the features. So we stripped it back to the **essential lemonade stand experience** - and it's so much better for it!
+The complexity became overwhelming, so I stripped it back to the **essential lemonade stand experience** - and will expand again from there!
 
 ### 🌍 The Future: Community-Driven Expansion
 
 I will slowly expand back to something even more **community cross-collaborative**, including:
 
 - **🌍 Unlimited Days**: No more 30-day limit
+- **📊 Advanced Analytics**: Track your business empire's growth over time
 - **📅 Real-Time Sync**: 1 Earth day = 1 lemonade stand day with streaks
 - **🏆 Global Leaderboard**: Compete with lemonade entrepreneurs worldwide
-- **🤝 Cross-Community Features**: Integration across multiple subreddits
-- **📊 Advanced Analytics**: Track your business empire's growth over time
+- **🤝 Cross-Community Features**: Booth Design and Trading
 
-The key is building it **incrementally** this time, keeping the core experience solid while adding meaningful community features. 🍋
-
-### 🎵 Development Soundtrack
-
-*Powered by hacker sounds, girly aesthetics, and epic soundtracks* 💖
+The key is building it **incrementally** this time, keeping the core experience solid while adding meaningful community features that I'll see if people want. 🍋
 
 #### 🎧 The Coding Playlist
-- **[Severance — Music To Refine To feat. ODESZA](https://www.youtube.com/watch?v=JRnDYB28bL8)** | Apple TV - The perfect focus music for deep coding sessions
-- **[Hacker Sounds Extension](https://marketplace.visualstudio.com/items?itemName=mattogodoy.hacker-sounds)** - Real-time coding sound effects
-- **ElevenLabs Generated Audio** - Custom sounds and music created but not used in Version 1
+- **[Severance — Music To Refine To feat. ODESZA](https://www.youtube.com/watch?v=JRnDYB28bL8)** | Apple TV - The perfect focus music for deep coding sessions for business simulators, on loop
+- I also listened to that when making [Bizniz Quest](https://devpost.com/software/bizniz-quest) at the last hackathon. Something about being unemployed... has me loving to pretend that I have a job.
 
-```
-    🎵 *Severance ambient* 🎵  ← Deep Focus Coding
-    🎵 *tap tap tap* 🎵       ← Hacker Sounds
-    🎵 *whoosh* 🎵           ← Compiling  
-    🎵 *ding!* 🎵            ← Success!
-    🎵 *sparkle* 🎵          ← Deploy Magic
-```
-
-## 🏗️ Technical Architecture
-
-```
-    📱 CLIENT (React)     🔄 API LAYER      🗄️ SERVER (Node.js)
-    ┌─────────────────┐   ┌─────────────┐   ┌──────────────────┐
-    │ 🎮 Game Logic   │◄──┤ /api/karma  │──►│ 🎯 Reddit API    │
-    │ 🎨 UI Components│   │ /api/health │   │ 📊 Redis Cache   │
-    │ 📱 Mobile First │   │ /api/...    │   │ 🔧 Game Engine   │
-    └─────────────────┘   └─────────────┘   └──────────────────┘
-           │                      │                     │
-           ▼                      ▼                     ▼
-    🌈 Tailwind CSS      ⚡ Express.js        🏪 Devvit Platform
-```
-
-### 🔮 Special Features
-
-```
-    ✨ REDDIT MAGIC ✨
-
-    🎯 Karma Detection ──► Sales Multiplier
-    📊 Redis Caching   ──► Performance
-    🏪 Devvit Platform ──► Native Integration
-    📱 Mobile Design   ──► Universal Access
-    🌈 Clean UI        ──► User Delight
 ```
 
 ---
 
 ### 🎮 Ready to Build Your Lemonade Empire?
 
-**[🍋 Play on r/Lemonomics](https://reddit.com/r/Lemonomics)** | **[📚 View Source](https://github.com/bitpixi2/lemonomics)** | **[🐛 Report Issues](https://github.com/bitpixi2/lemonomics/issues)**
+**[🍋 Play on r/Lemonomics](https://reddit.com/r/Lemonomics)** | **[📚 View Source](https://github.com/bitpixi2/lemonomics)** | **[🐛 Report Issues, because there are many](https://github.com/bitpixi2/lemonomics/issues)**
 
 _When life gives you lemons, make a profitable business!_ 🍋💰✨
