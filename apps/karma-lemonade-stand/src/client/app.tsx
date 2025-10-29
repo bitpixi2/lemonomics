@@ -645,175 +645,185 @@ export const App: React.FC = () => {
 
     return (
       <>
-        <div className="min-h-screen bg-gradient-to-b from-blue-200 to-green-200 p-2 flex items-center justify-center">
+        <div className="min-h-screen bg-gradient-to-b from-amber-100 to-yellow-100 p-4 flex items-center justify-center">
           <AudioControlButton />
-          <div className="w-full max-w-md mx-auto">
-            <div className="bg-white rounded-lg shadow-xl p-4">
-              {/* Header - Simple */}
-              <div className="text-center mb-4">
-                <h2 className="text-xl font-bold text-green-700">🏪 Set Up Your Stand</h2>
-                <p className="text-sm text-gray-600">
-                  Day {gameState.day} • ${gameState.assets.toFixed(2)} available
-                </p>
+          <div className="w-full max-w-2xl mx-auto">
+            {/* Notepad Style Container */}
+            <div className="bg-white shadow-2xl transform rotate-1 relative">
+              {/* Spiral binding holes */}
+              <div className="absolute left-8 top-0 bottom-0 w-1 bg-red-400 opacity-30"></div>
+              <div className="absolute left-12 top-4 space-y-8">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <div key={i} className="w-3 h-3 bg-gray-300 rounded-full"></div>
+                ))}
               </div>
-
-              {/* Inputs - Dynamic Layout Based on Day */}
-              <div className="space-y-3">
-                {gameState.day >= 3 ? (
-                  // After day 3: 4-column grid with sugar
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
-                        Glasses
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="1000"
-                        value={inputs.glasses}
-                        onChange={(e) =>
-                          setInputs((prev) => ({ ...prev, glasses: e.target.value }))
-                        }
-                        className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                        placeholder="0"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
-                        Sugar (2¢)
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="1000"
-                        value={inputs.sugar}
-                        onChange={(e) => setInputs((prev) => ({ ...prev, sugar: e.target.value }))}
-                        className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                        placeholder="0"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Signs</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="50"
-                        value={inputs.signs}
-                        onChange={(e) => setInputs((prev) => ({ ...prev, signs: e.target.value }))}
-                        className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                        placeholder="0"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
-                        Price (¢)
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={inputs.price}
-                        onChange={(e) => setInputs((prev) => ({ ...prev, price: e.target.value }))}
-                        className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                        placeholder="10"
-                      />
-                    </div>
+              
+              {/* Notepad Content */}
+              <div className="p-8 pl-20 pr-8">
+                {/* Header with handwritten style */}
+                <div className="text-center mb-8">
+                  <h2 className="text-3xl font-bold text-blue-800 transform -rotate-1 font-mono">
+                    📝 Business Plan - Day {gameState.day}
+                  </h2>
+                  <div className="text-lg text-gray-700 mt-2 transform rotate-1 font-mono">
+                    💰 Budget: ${gameState.assets.toFixed(2)}
                   </div>
-                ) : (
-                  // Before day 3: 3-column grid without sugar
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
-                        Glasses
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="1000"
-                        value={inputs.glasses}
-                        onChange={(e) =>
-                          setInputs((prev) => ({ ...prev, glasses: e.target.value }))
-                        }
-                        className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                        placeholder="0"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Signs</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="50"
-                        value={inputs.signs}
-                        onChange={(e) => setInputs((prev) => ({ ...prev, signs: e.target.value }))}
-                        className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                        placeholder="0"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
-                        Price (¢)
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={inputs.price}
-                        onChange={(e) => setInputs((prev) => ({ ...prev, price: e.target.value }))}
-                        className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                        placeholder="10"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Cost Preview & Budget Check */}
-                <div className="bg-gray-50 p-2 rounded text-xs">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <p className="text-gray-600">
-                        <strong>Total Cost:</strong> $
-                        {(
-                          (parseInt(inputs.glasses) || 0) * lemonCost +
-                          (parseInt(inputs.sugar) || 0) * (gameState.day >= 3 ? 0.02 : 0) +
-                          (parseInt(inputs.signs) || 0) * 0.15
-                        ).toFixed(2)}
-                      </p>
-                    </div>
-                    <div>
-                      <p
-                        className={`${
-                          gameState.assets -
-                            ((parseInt(inputs.glasses) || 0) * lemonCost +
-                              (parseInt(inputs.signs) || 0) * 0.15) <
-                          0
-                            ? 'text-red-600 font-semibold'
-                            : 'text-green-600'
-                        }`}
-                      >
-                        <strong>Remaining:</strong> $
-                        {(
-                          gameState.assets -
-                          ((parseInt(inputs.glasses) || 0) * lemonCost +
-                            (parseInt(inputs.sugar) || 0) * (gameState.day >= 3 ? 0.02 : 0) +
-                            (parseInt(inputs.signs) || 0) * 0.15)
-                        ).toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
+                  <div className="w-full h-px bg-blue-300 mt-4 transform -rotate-1"></div>
                 </div>
 
-                <button
-                  onClick={playDay}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-sm"
-                >
-                  Open Your Stand! 🏪
-                </button>
+                {/* Handwritten style form */}
+                <div className="space-y-6">
+                  {/* Recipe Section */}
+                  <div className="transform -rotate-1">
+                    <h3 className="text-xl font-bold text-green-700 mb-4 font-mono">🍋 Today's Recipe:</h3>
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="block text-lg font-semibold text-gray-800 font-mono">
+                          Glasses to make:
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="1000"
+                          value={inputs.glasses}
+                          onChange={(e) => setInputs((prev) => ({ ...prev, glasses: e.target.value }))}
+                          className="w-full p-3 text-xl border-b-2 border-blue-400 bg-transparent focus:border-blue-600 focus:outline-none font-mono transform rotate-1"
+                          placeholder="0"
+                          style={{ 
+                            background: 'linear-gradient(transparent 90%, #e0f2fe 90%)',
+                            backgroundSize: '100% 1.5em'
+                          }}
+                        />
+                        <p className="text-sm text-gray-600 font-mono">
+                          @ ${lemonCost.toFixed(2)} each = ${((parseInt(inputs.glasses) || 0) * lemonCost).toFixed(2)}
+                        </p>
+                      </div>
+
+                      {gameState.day >= 3 && (
+                        <div className="space-y-2">
+                          <label className="block text-lg font-semibold text-gray-800 font-mono">
+                            Sugar packets:
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="1000"
+                            value={inputs.sugar}
+                            onChange={(e) => setInputs((prev) => ({ ...prev, sugar: e.target.value }))}
+                            className="w-full p-3 text-xl border-b-2 border-blue-400 bg-transparent focus:border-blue-600 focus:outline-none font-mono transform rotate-1"
+                            placeholder="0"
+                            style={{ 
+                              background: 'linear-gradient(transparent 90%, #e0f2fe 90%)',
+                              backgroundSize: '100% 1.5em'
+                            }}
+                          />
+                          <p className="text-sm text-gray-600 font-mono">
+                            @ $0.02 each = ${((parseInt(inputs.sugar) || 0) * 0.02).toFixed(2)}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Marketing Section */}
+                  <div className="transform rotate-1">
+                    <h3 className="text-xl font-bold text-purple-700 mb-4 font-mono">📢 Marketing & Pricing:</h3>
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="block text-lg font-semibold text-gray-800 font-mono">
+                          Advertising signs:
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="50"
+                          value={inputs.signs}
+                          onChange={(e) => setInputs((prev) => ({ ...prev, signs: e.target.value }))}
+                          className="w-full p-3 text-xl border-b-2 border-blue-400 bg-transparent focus:border-blue-600 focus:outline-none font-mono transform -rotate-1"
+                          placeholder="0"
+                          style={{ 
+                            background: 'linear-gradient(transparent 90%, #e0f2fe 90%)',
+                            backgroundSize: '100% 1.5em'
+                          }}
+                        />
+                        <p className="text-sm text-gray-600 font-mono">
+                          @ $0.15 each = ${((parseInt(inputs.signs) || 0) * 0.15).toFixed(2)}
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-lg font-semibold text-gray-800 font-mono">
+                          Price per glass (¢):
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={inputs.price}
+                          onChange={(e) => setInputs((prev) => ({ ...prev, price: e.target.value }))}
+                          className="w-full p-3 text-xl border-b-2 border-blue-400 bg-transparent focus:border-blue-600 focus:outline-none font-mono transform -rotate-1"
+                          placeholder="10"
+                          style={{ 
+                            background: 'linear-gradient(transparent 90%, #e0f2fe 90%)',
+                            backgroundSize: '100% 1.5em'
+                          }}
+                        />
+                        <p className="text-sm text-gray-600 font-mono">
+                          = ${((parseInt(inputs.price) || 0) / 100).toFixed(2)} per glass
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Budget Summary */}
+                  <div className="transform -rotate-1 bg-yellow-50 p-4 rounded-lg border-2 border-dashed border-yellow-400">
+                    <h3 className="text-xl font-bold text-orange-700 mb-3 font-mono">💰 Budget Summary:</h3>
+                    <div className="grid grid-cols-2 gap-4 text-lg font-mono">
+                      <div>
+                        <p className="text-gray-700">
+                          <strong>Total Cost:</strong>
+                        </p>
+                        <p className="text-2xl font-bold text-red-600">
+                          ${(
+                            (parseInt(inputs.glasses) || 0) * lemonCost +
+                            (parseInt(inputs.sugar) || 0) * (gameState.day >= 3 ? 0.02 : 0) +
+                            (parseInt(inputs.signs) || 0) * 0.15
+                          ).toFixed(2)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-700">
+                          <strong>Money Left:</strong>
+                        </p>
+                        <p className={`text-2xl font-bold ${
+                          gameState.assets -
+                            ((parseInt(inputs.glasses) || 0) * lemonCost +
+                              (parseInt(inputs.sugar) || 0) * (gameState.day >= 3 ? 0.02 : 0) +
+                              (parseInt(inputs.signs) || 0) * 0.15) < 0
+                            ? 'text-red-600'
+                            : 'text-green-600'
+                        }`}>
+                          ${(
+                            gameState.assets -
+                            ((parseInt(inputs.glasses) || 0) * lemonCost +
+                              (parseInt(inputs.sugar) || 0) * (gameState.day >= 3 ? 0.02 : 0) +
+                              (parseInt(inputs.signs) || 0) * 0.15)
+                          ).toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
+                  <div className="text-center pt-4">
+                    <button
+                      onClick={playDay}
+                      className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 px-8 rounded-full text-xl shadow-lg transform hover:scale-105 transition-all duration-200 font-mono"
+                    >
+                      🏪 Open My Lemonade Stand! 🍋
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
