@@ -389,6 +389,50 @@ Thanks for contributing to our zesty community! 🍋✨🏆`
   }
 };
 
+// Subscribe user to r/Lemonomics
+router.post('/api/subscribe-lemonomics', async (_req, res): Promise<void> => {
+  try {
+    const currentUser = await reddit.getCurrentUser();
+    
+    if (!currentUser) {
+      res.status(400).json({
+        status: 'error',
+        message: 'Unable to get current user',
+      });
+      return;
+    }
+
+    // Subscribe user to current subreddit (r/Lemonomics)
+    // This requires SUBSCRIBE_TO_SUBREDDIT permission in devvit.json
+    try {
+      await reddit.subscribeToCurrentSubreddit();
+      console.log(`✅ Subscribed user ${currentUser.username} to r/Lemonomics`);
+
+      res.json({
+        status: 'success',
+        message: `Successfully subscribed to r/Lemonomics!`,
+        username: currentUser.username
+      });
+    } catch (subscribeError) {
+      console.error('Subscription failed:', subscribeError);
+      
+      // Fallback: provide manual subscription guidance
+      res.json({
+        status: 'info',
+        message: `Please visit r/Lemonomics to subscribe manually for the full experience!`,
+        username: currentUser.username,
+        fallback: true
+      });
+    }
+  } catch (error) {
+    console.error('Subscribe error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to process subscription request',
+    });
+  }
+});
+
 // Enhanced content moderation for recipe submissions
 const moderateContent = (content: string) => {
   const lowerContent = content.toLowerCase();

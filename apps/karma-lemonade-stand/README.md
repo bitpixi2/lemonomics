@@ -16,9 +16,39 @@
     ╚══════════════════════════════════════════════════════════════╝
 ```
 
+## 🤖 **FEATURED: Advanced Kiro Hook Automation System**
+
+### 🏆 **Hackathon Showcase: Community Recipe Sharing with AI Automation**
+
+This game demonstrates **cutting-edge Kiro developer experience** through an automated community management system:
+
+```
+    🍋 RECIPE SHARING WORKFLOW 🍋
+
+    Player rates recipe 5⭐ ──► "Submit Recipe" button ──► ModMail opens
+                                        │
+                                        ▼
+    🤖 Kiro Hook (runs hourly) ──► AI Content Moderation ──► Auto-flair award
+                                        │
+                                        ▼
+    Community growth ◄──── Personalized responses ◄──── Archive conversation
+```
+
+**🎯 Key Innovation**: Players can share their own lemon recipes through ModMail, and **Kiro automatically processes submissions within an hour**, awarding "Recipe Contributor" flair and sending personalized responses - **zero manual moderation required!**
+
+**📁 Implementation**: See `.kiro/hooks/` directory for the complete automation system including:
+- `recipe-modmail-processor.md` - Kiro hook configuration
+- `process-recipes.sh` - Automated processing script  
+- Smart content moderation with lemon-theme relevance checking
+- Automatic flair awarding and community management
+
+This showcases how **Kiro transforms simple game features into sophisticated community platforms** that scale effortlessly! 🚀
+
+---
+
 ## 🎮 The Classic 1973→1979 Game, Reimagined for Reddit
 
-Remember the legendary Apple II lemonade stand game? We've brought it back with a **modern twist**!
+Remember the legendary Apple II lemonade stand game? We've brought it back with a **modern twist** and **AI-powered community features**!
 
 ```
          🍋                    🏪                    💰

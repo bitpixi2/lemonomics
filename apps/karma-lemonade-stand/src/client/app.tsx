@@ -624,33 +624,46 @@ export const App: React.FC = () => {
               Welcome to the classic lemonade stand business game! Start with $2.00 and try to build
               your lemonade empire.
             </p>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 mb-6">
               Based on the original 1979 Apple Computer game
             </p>
-            <div className="bg-blue-50 border border-blue-200 p-3 rounded mb-6">
-              <p className="text-sm text-blue-800 font-semibold">🎯 Reddit Karma Boosts:</p>
-              <p className="text-xs text-blue-700">
-                • 300+ karma: 1.15x sales boost
-                <br />
-                • 1,000+ karma: 1.5x sales boost
-                <br />• 5,000+ karma: 2x sales boost
+            
+            <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-200 p-4 rounded-lg mb-6">
+              <p className="text-sm text-orange-800 font-semibold mb-2">🏆 Join the Community!</p>
+              <p className="text-xs text-orange-700 mb-3">
+                Subscribe to r/Lemonomics for exclusive flair rewards, recipe sharing, and leaderboard competitions!
               </p>
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await fetch('/api/subscribe-lemonomics', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' }
+                    });
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                      alert(`� Welcoome to r/Lemonomics, ${data.username}! You're now part of the lemon empire!`);
+                    } else if (data.status === 'info' && data.fallback) {
+                      alert(`${data.message}\n\nClick OK to visit r/Lemonomics manually!`);
+                      window.open('https://reddit.com/r/Lemonomics', '_blank');
+                    } else {
+                      alert('Already subscribed or unable to subscribe at this time.');
+                    }
+                  } catch (error) {
+                    console.error('Subscribe error:', error);
+                    alert('Unable to subscribe at this time. You can manually visit r/Lemonomics!');
+                    window.open('https://reddit.com/r/Lemonomics', '_blank');
+                  }
+                }}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded text-sm transition-colors"
+              >
+                Subscribe to r/Lemonomics 🍋
+              </button>
             </div>
-            <div className="bg-purple-50 border border-purple-200 p-3 rounded mb-6">
-              <p className="text-sm text-purple-800 font-semibold">🏆 Achievement Rewards:</p>
-              <p className="text-xs text-purple-700">
-                • Day 10: 🍋 Lemon Apprentice flair
-                <br />
-                • Day 20: 🤑 Citrus Tycoon flair
-                <br />• Day 30: 🌍 Global Lemonade Hero flair
-              </p>
-              <p className="text-xs text-purple-600 mt-1">
-                Exclusive flair awarded in r/Lemonomics!
-              </p>
-            </div>
+
             <button
               onClick={startGame}
-              className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg text-lg"
+              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg text-lg"
             >
               Start Your Stand! 🍋
             </button>
@@ -955,92 +968,143 @@ export const App: React.FC = () => {
   if (phase === 'results' && dayResult) {
     return (
       <>
-        <div className="min-h-screen bg-gradient-to-b from-green-200 to-blue-200 p-4">
+        <div className="min-h-screen bg-gradient-to-b from-green-200 to-blue-200 p-4 flex items-center justify-center">
           <AudioControlButton />
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-white rounded-lg shadow-xl p-6">
-              <h2 className="text-2xl font-bold text-center mb-6">
-                📊 Daily Report - Day {gameState.day}
-              </h2>
-
-              {dayResult.specialEvent && (
-                <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded mb-4">
-                  <p className="font-semibold">📰 Special Event:</p>
-                  <p>{dayResult.specialEvent}</p>
-                </div>
-              )}
-
-              <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                <h3 className="font-bold text-lg mb-3">Lemonade Stand Results</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p>
-                      <strong>{dayResult.glassesSold}</strong> glasses sold
-                    </p>
-                    <p>
-                      <strong>${(gameState.price / 100).toFixed(2)}</strong> per glass
-                    </p>
-                    <p>
-                      <strong>{gameState.glasses}</strong> glasses made
-                    </p>
-                    <p>
-                      <strong>{gameState.signs}</strong> signs made
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p>
-                      <strong>Income:</strong> ${dayResult.income.toFixed(2)}
-                    </p>
-                    <p>
-                      <strong>Expenses:</strong> ${dayResult.expenses.toFixed(2)}
-                    </p>
-                    <p
-                      className={`font-bold ${dayResult.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}
-                    >
-                      <strong>Profit:</strong> ${dayResult.profit.toFixed(2)}
-                    </p>
-                    <p>
-                      <strong>Assets:</strong> ${gameState.assets.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
+          <div className="w-full max-w-2xl mx-auto">
+            {/* Notepad Style Container */}
+            <div className="bg-white shadow-2xl transform -rotate-1 relative">
+              {/* Spiral binding holes */}
+              <div className="absolute left-8 top-0 bottom-0 w-1 bg-red-400 opacity-30"></div>
+              <div className="absolute left-12 top-4 space-y-8">
+                {Array.from({ length: 15 }).map((_, i) => (
+                  <div key={i} className="w-3 h-3 bg-gray-300 rounded-full"></div>
+                ))}
               </div>
 
-              {gameState.bankrupt ? (
-                <div className="bg-red-500 text-white px-6 py-4 rounded-lg mb-4 text-center border-4 border-red-600 shadow-lg">
-                  <div className="text-4xl mb-2">💸</div>
-                  <p className="font-bold text-xl mb-2">BANKRUPTCY!</p>
-                  <p className="text-red-100 mb-2">
-                    You don't have enough money to continue in business.
-                  </p>
-                  <p className="text-sm text-red-200">
-                    You need at least ${getLemonCost(gameState.day + 1).toFixed(2)} to make lemonade for tomorrow.
-                  </p>
-                  <div className="mt-3 p-2 bg-red-600 rounded">
-                    <p className="text-xs text-red-100">
-                      💡 Tip: Try making fewer glasses or charging higher prices to stay profitable!
-                    </p>
-                  </div>
+              {/* Notepad Content */}
+              <div className="p-8 pl-20 pr-8">
+                {/* Header with handwritten style */}
+                <div className="text-center mb-8">
+                  <h2 className="text-3xl font-bold text-green-800 transform -rotate-1 font-mono">
+                    📊 Daily Report - Day {gameState.day}
+                  </h2>
+                  <div className="w-full h-px bg-green-300 mt-4 transform -rotate-1"></div>
                 </div>
-              ) : null}
 
-              {/* Leaderboard */}
-              {leaderboard.length > 0 && (
-                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg p-4 mb-4">
-                  <h3 className="font-bold text-lg mb-3 text-center text-orange-700">
-                    🏆 Top Entrepreneurs
+                {/* Special Event */}
+                {dayResult.specialEvent && (
+                  <div className="transform rotate-1 mb-6">
+                    <div className="bg-yellow-100 border-2 border-yellow-400 p-4 rounded-lg font-mono">
+                      <p className="font-bold text-yellow-800">📰 Breaking News:</p>
+                      <p className="text-yellow-700 text-sm mt-1">{dayResult.specialEvent}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Business Results */}
+                <div className="transform -rotate-1 mb-6">
+                  <h3 className="text-xl font-bold text-blue-700 mb-4 font-mono">
+                    🍋 Today's Business Results:
                   </h3>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <div className="font-mono">
+                        <span className="text-gray-700">Glasses sold:</span>
+                        <span className="float-right font-bold text-green-600">
+                          {dayResult.glassesSold}
+                        </span>
+                        <div className="border-b border-dotted border-gray-400"></div>
+                      </div>
+                      <div className="font-mono">
+                        <span className="text-gray-700">Price per glass:</span>
+                        <span className="float-right font-bold">
+                          ${(gameState.price / 100).toFixed(2)}
+                        </span>
+                        <div className="border-b border-dotted border-gray-400"></div>
+                      </div>
+                      <div className="font-mono">
+                        <span className="text-gray-700">Glasses made:</span>
+                        <span className="float-right">{gameState.glasses}</span>
+                        <div className="border-b border-dotted border-gray-400"></div>
+                      </div>
+                      <div className="font-mono">
+                        <span className="text-gray-700">Signs used:</span>
+                        <span className="float-right">{gameState.signs}</span>
+                        <div className="border-b border-dotted border-gray-400"></div>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="font-mono">
+                        <span className="text-gray-700">Income:</span>
+                        <span className="float-right font-bold text-green-600">
+                          ${dayResult.income.toFixed(2)}
+                        </span>
+                        <div className="border-b border-dotted border-gray-400"></div>
+                      </div>
+                      <div className="font-mono">
+                        <span className="text-gray-700">Expenses:</span>
+                        <span className="float-right font-bold text-red-600">
+                          ${dayResult.expenses.toFixed(2)}
+                        </span>
+                        <div className="border-b border-dotted border-gray-400"></div>
+                      </div>
+                      <div className="font-mono">
+                        <span className="text-gray-700">Profit:</span>
+                        <span className={`float-right font-bold ${dayResult.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          ${dayResult.profit.toFixed(2)}
+                        </span>
+                        <div className="border-b-2 border-solid border-gray-600"></div>
+                      </div>
+                      <div className="font-mono">
+                        <span className="text-gray-700 font-bold">Total Assets:</span>
+                        <span className={`float-right font-bold text-lg ${gameState.assets >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          ${gameState.assets.toFixed(2)}
+                        </span>
+                        <div className="border-b-2 border-solid border-gray-600"></div>
+                      </div>
+                    </div>
+                  </div>
+              </div>
+
+                {/* Bankruptcy Alert */}
+                {gameState.bankrupt && (
+                  <div className="transform rotate-1 mb-6">
+                    <div className="bg-red-500 text-white px-6 py-4 rounded-lg text-center border-4 border-red-600 shadow-lg font-mono">
+                      <div className="text-4xl mb-2">💸</div>
+                      <p className="font-bold text-xl mb-2">BANKRUPTCY!</p>
+                      <p className="text-red-100 mb-2">
+                        You don't have enough money to continue in business.
+                      </p>
+                      <p className="text-sm text-red-200">
+                        You need at least ${getLemonCost(gameState.day + 1).toFixed(2)} to make lemonade for tomorrow.
+                      </p>
+                      <div className="mt-3 p-2 bg-red-600 rounded">
+                        <p className="text-xs text-red-100">
+                          💡 Tip: Try making fewer glasses or charging higher prices to stay profitable!
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Leaderboard */}
+                {leaderboard.length > 0 && (
+                  <div className="transform -rotate-1 mb-6">
+                    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg p-4">
+                      <h3 className="font-bold text-lg mb-3 text-center text-orange-700 font-mono">
+                        🏆 Top Entrepreneurs
+                      </h3>
                   <div className="space-y-2">
                     {leaderboard.map((player, index) => (
                       <div
                         key={player.username}
-                        className={`flex items-center justify-between p-2 rounded ${
-                          index === 0
-                            ? 'bg-yellow-200 border border-yellow-400'
-                            : index === 1
-                              ? 'bg-gray-100 border border-gray-300'
-                              : 'bg-orange-100 border border-orange-300'
-                        }`}
+                            className={`flex items-center justify-between p-2 rounded font-mono ${
+                              index === 0
+                                ? 'bg-yellow-200 border border-yellow-400'
+                                : index === 1
+                                  ? 'bg-gray-100 border border-gray-300'
+                                  : 'bg-orange-100 border border-orange-300'
+                            }`}
                       >
                         <div className="flex items-center space-x-2">
                           <span className="text-lg font-bold">
@@ -1057,22 +1121,27 @@ export const App: React.FC = () => {
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-gray-500 text-center mt-2">
-                    Live leaderboard updates every day!
-                  </p>
-                </div>
-              )}
+                      <p className="text-xs text-gray-500 text-center mt-2 font-mono">
+                        Live leaderboard updates every day!
+                      </p>
+                    </div>
+                  </div>
+                )}
 
-              <button
-                onClick={nextDay}
-                className={`w-full font-bold py-3 px-6 rounded-lg ${
-                  gameState.bankrupt
-                    ? 'bg-red-500 hover:bg-red-600 text-white'
-                    : 'bg-blue-500 hover:bg-blue-600 text-white'
-                }`}
-              >
-                {gameState.bankrupt ? 'Game Over 😢' : `Continue to Day ${gameState.day + 1} ➡️`}
-              </button>
+                {/* Continue Button */}
+                <div className="transform rotate-1">
+                  <button
+                    onClick={nextDay}
+                    className={`w-full font-bold py-4 px-6 rounded-lg font-mono text-lg ${
+                      gameState.bankrupt
+                        ? 'bg-red-500 hover:bg-red-600 text-white'
+                        : 'bg-green-500 hover:bg-green-600 text-white'
+                    }`}
+                  >
+                    {gameState.bankrupt ? 'Game Over 😢' : `Continue to Day ${gameState.day + 1} ➡️`}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1126,7 +1195,7 @@ Instructions: `);
               </div>
 
               <div className="mb-6">
-                <p className="text-gray-700 mb-3">How would you rate this recipe?</p>
+                <p className="text-gray-700 mb-3">How would you rate this recipe? (Optional)</p>
                 <div className="flex justify-center space-x-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
@@ -1140,22 +1209,29 @@ Instructions: `);
                     </button>
                   ))}
                 </div>
+                {recipeRating > 0 && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    Thanks for rating! {recipeRating === 5 ? '🌟 You loved it!' : ''}
+                  </p>
+                )}
               </div>
 
-              {recipeRating === 5 && (
-                <div className="bg-green-50 border border-green-300 rounded-lg p-4 mb-4">
-                  <p className="text-green-800 font-semibold mb-2">🌟 You loved this recipe!</p>
-                  <p className="text-green-700 text-sm mb-3">
-                    Share your own lemon recipe with the community!
-                  </p>
-                  <button
-                    onClick={openModMail}
-                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm"
-                  >
-                    📨 Share Your Recipe
-                  </button>
-                </div>
-              )}
+              {/* Community Recipe Sharing */}
+              <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-300 rounded-lg p-4 mb-6">
+                <p className="text-green-800 font-semibold mb-2">🍋 Share Your Recipe!</p>
+                <p className="text-green-700 text-sm mb-3">
+                  Have a favorite lemon recipe? Share it with the r/Lemonomics community and earn the "Recipe Contributor" flair!
+                </p>
+                <button
+                  onClick={openModMail}
+                  className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-sm"
+                >
+                  📨 Submit Your Recipe
+                </button>
+                <p className="text-xs text-green-600 mt-2">
+                  ✨ Processed automatically by Kiro AI - get your flair within an hour!
+                </p>
+              </div>
 
               <button
                 onClick={() => setPhase('dayBriefing')}
