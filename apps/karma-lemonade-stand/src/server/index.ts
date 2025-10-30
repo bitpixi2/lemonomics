@@ -433,6 +433,61 @@ router.post('/api/subscribe-lemonomics', async (_req, res): Promise<void> => {
   }
 });
 
+// Track 5-star recipe ratings and award "5-Star Lemon Chef" flair
+router.post('/api/rate-recipe', async (req, res): Promise<void> => {
+  try {
+    const { recipeId, rating, recipeAuthor } = req.body as { 
+      recipeId: string; 
+      rating: number; 
+      recipeAuthor?: string; 
+    };
+    
+    const { userId } = context;
+    if (!userId) {
+      res.status(400).json({
+        status: 'error',
+        message: 'User ID required',
+      });
+      return;
+    }
+
+    // Only process 5-star ratings for community recipes
+    if (rating === 5 && recipeAuthor) {
+      // Track the 5-star rating in Redis
+      const ratingKey = `recipe:${recipeId}:5star_count`;
+      const currentCount = await redis.get(ratingKey);
+      const newCount = (parseInt(currentCount || '0') + 1);
+      
+      await redis.set(ratingKey, newCount.toString());
+      
+      // Award "5-Star Lemon Chef" flair if they get 3+ five-star ratings
+      if (newCount >= 3) {
+        try {
+          await reddit.setUserFlair({
+            subredditName: 'Lemonomics',
+            username: recipeAuthor,
+            flairTemplateId: '28ccf15c-b538-11f0-86bc-7688f5c49fe7' // 5-Star Lemon Chef flair
+          });
+          console.log(`🌟 Awarded 5-Star Lemon Chef flair to ${recipeAuthor} (${newCount} five-star ratings)`);
+        } catch (flairError) {
+          console.error(`Failed to award 5-Star Lemon Chef flair to ${recipeAuthor}:`, flairError);
+        }
+      }
+    }
+
+    res.json({
+      status: 'success',
+      message: 'Rating recorded',
+    });
+  } catch (error) {
+    console.error('Rate recipe error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to record rating',
+    });
+  }
+});
+
 // Enhanced content moderation for recipe submissions
 const moderateContent = (content: string) => {
   const lowerContent = content.toLowerCase();

@@ -1163,10 +1163,14 @@ Description:
 Ingredients: 
 Instructions: `);
 
-      window.open(
-        `https://www.reddit.com/message/compose/?to=/r/Lemonomics&subject=${subject}&message=${body}`,
-        '_blank'
-      );
+      const modMailUrl = `https://www.reddit.com/message/compose/?to=/r/Lemonomics&subject=${subject}&message=${body}`;
+      
+      // Try to open in new window, fallback to same window if blocked
+      const newWindow = window.open(modMailUrl, '_blank');
+      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        // Popup blocked, open in same window
+        window.location.href = modMailUrl;
+      }
     };
 
     return (

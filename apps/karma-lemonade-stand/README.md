@@ -16,36 +16,6 @@
     ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## 🤖 **FEATURED: Advanced Kiro Hook Automation System**
-
-### 🏆 **Hackathon Showcase: Community Recipe Sharing with AI Automation**
-
-This game demonstrates **cutting-edge Kiro developer experience** through an automated community management system:
-
-```
-    🍋 RECIPE SHARING WORKFLOW 🍋
-
-    Player rates recipe 5⭐ ──► "Submit Recipe" button ──► ModMail opens
-                                        │
-                                        ▼
-    🤖 Kiro Hook (runs hourly) ──► AI Content Moderation ──► Auto-flair award
-                                        │
-                                        ▼
-    Community growth ◄──── Personalized responses ◄──── Archive conversation
-```
-
-**🎯 Key Innovation**: Players can share their own lemon recipes through ModMail, and **Kiro automatically processes submissions within an hour**, awarding "Recipe Contributor" flair and sending personalized responses - **zero manual moderation required!**
-
-**📁 Implementation**: See `.kiro/hooks/` directory for the complete automation system including:
-- `recipe-modmail-processor.md` - Kiro hook configuration
-- `process-recipes.sh` - Automated processing script  
-- Smart content moderation with lemon-theme relevance checking
-- Automatic flair awarding and community management
-
-This showcases how **Kiro transforms simple game features into sophisticated community platforms** that scale effortlessly! 🚀
-
----
-
 ## 🎮 The Classic 1973→1979 Game, Reimagined for Reddit
 
 Remember the legendary Apple II lemonade stand game? We've brought it back with a **modern twist** and **AI-powered community features**!
@@ -186,12 +156,12 @@ Your Reddit reputation directly impacts your lemonade business!
 
 ## 🛠️ Development Story
 
-### 💖 Built with Kiro: Less is More Philosophy
+### 💖 Built with Kiro:
 
 ```
     ╔════════════════════════════════════════════════════╗
-    ║  "With Kiro, less is more. Specs feel godly,      ║
-    ║   but can bloat the build."                        ║
+    ║  "With Kiro, less is more. Specs feel godly,       ║
+    ║   but can bloat the build if done wrong."          ║
     ║                                    - The Developer ║
     ╚════════════════════════════════════════════════════╝
 ```
@@ -205,6 +175,34 @@ Your Reddit reputation directly impacts your lemonade business!
 - **[Amethyst Kiss Themes Pack](https://marketplace.visualstudio.com/items?itemName=MahdiBehkar.amethyst-kiss-themes-pack)** by MahdiBehkar - Those gorgeous purple vibes!
 
 I love this about Kiro - they have extensions that transform your development environment into whatever aesthetic inspires you! That and Kiro's little ghost face made up for all the really frustrating bugs like the play button not working to accept, spec tasks getting stuck, and documents ignored (Who could be mad at that little ghosty face?) ✨
+
+## 🤖 **FEATURED: Advanced Kiro Hook Automation System**
+
+### 🏆 **Hackathon Showcase: Community Recipe Sharing with AI Automation**
+
+This game demonstrates **cutting-edge Kiro developer experience** through an automated community management system:
+
+```
+    🍋 RECIPE SHARING WORKFLOW 🍋
+
+    Player sees Recipe Break ──► "Submit Recipe" button ──► ModMail opens
+                                        │
+                                        ▼
+    🤖 Kiro Hook (runs hourly) ──► AI Content Moderation ──► Auto-flair award
+                                        │
+                                        ▼
+    Community growth ◄──── Personalized responses ◄──── Archive conversation
+```
+
+**🎯 Key Innovation**: Players can share their own lemon recipes through ModMail, and **Kiro automatically processes submissions within an hour**, awarding "Recipe Contributor" flair and sending personalized responses - **zero manual moderation required!** When a player rates your recipe 5-stars, then you get "5-Star Recipe Chef" flair.
+
+**📁 Implementation**: See `.kiro/hooks/` directory for the complete automation system including:
+- `recipe-modmail-processor.md` - Kiro hook configuration
+- `process-recipes.sh` - Automated processing script  
+- Smart content moderation with lemon-theme relevance checking
+- Automatic flair awarding and community management
+
+This showcases how **Kiro transforms simple game features into sophisticated community platforms** that scale effortlessly! 🚀
 
 ### 🎬 The Ambitious Vision That Almost Was
 
@@ -239,19 +237,7 @@ Originally, this game was **much more ambitious**! The initial vision included:
 
 **But it was all too ambitious and ultimately wouldn't run.** 😅
 
-The complexity became overwhelming, so I stripped it back to the **essential lemonade stand experience** - and will expand again from there!
-
-### 🌍 The Future: Community-Driven Expansion
-
-I will slowly expand back to something even more **community cross-collaborative**, including:
-
-- **🌍 Unlimited Days**: No more 30-day limit
-- **📊 Advanced Analytics**: Track your business empire's growth over time
-- **📅 Real-Time Sync**: 1 Earth day = 1 lemonade stand day with streaks
-- **🏆 Global Leaderboard**: Compete with lemonade entrepreneurs worldwide
-- **🤝 Cross-Community Features**: Booth Design and Trading
-
-The key is building it **incrementally** this time, keeping the core experience solid while adding meaningful community features that I'll see if people want. 🍋
+The complexity became overwhelming, so I stripped it back to the **essential lemonade stand experience** - and started expanding again from there!
 
 #### 🎧 The Coding Playlist
 - **[Severance — Music To Refine To feat. ODESZA](https://www.youtube.com/watch?v=JRnDYB28bL8)** | Apple TV - The perfect focus music for deep coding sessions for business simulators, on loop
