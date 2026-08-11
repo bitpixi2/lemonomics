@@ -52,3 +52,40 @@ export type UpdateProgressRequest = {
   day: number;
   assets: number;
 };
+
+export type GamePhase = 'intro' | 'dayBriefing' | 'setup' | 'results' | 'gameOver';
+
+export type GameState = {
+  day: number;
+  cash: number;
+  glasses: number;
+  signs: number;
+  price: number;
+  weather: 'sunny' | 'cloudy' | 'rainy' | 'hot';
+  assets: number;
+  bankrupt: boolean;
+};
+
+export type DayResult = {
+  glassesSold: number;
+  income: number;
+  expenses: number;
+  profit: number;
+  specialEvent?: string;
+};
+
+export type SavedGame = {
+  phase: Exclude<GamePhase, 'intro'>;
+  gameState: GameState;
+  dayResult: DayResult | null;
+  savedAt: string;
+};
+
+export type GameSaveResponse =
+  | { type: 'game-save'; saved: false }
+  | { type: 'game-save'; saved: true; game: SavedGame };
+
+export type SupporterStatusResponse = {
+  type: 'supporter-status';
+  supporter: boolean;
+};

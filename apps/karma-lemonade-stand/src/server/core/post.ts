@@ -7,19 +7,9 @@ export const createPost = async () => {
   }
 
   return await reddit.submitCustomPost({
-    splash: {
-      // Splash Screen Configuration
-      appDisplayName: 'Lemonomics',
-      backgroundUri: 'splash-background.png',
-      buttonLabel: '🍋 Start Your Stand',
-      description: '',
-      entryUri: 'index.html',
-      heading: '',
-      appIconUri: 'app-icon.png',
-    } as any,
     postData: {
       gameType: 'lemonade-stand',
-      version: '1.0.0',
+      version: '1.1.0',
     },
     subredditName: subredditName,
     title: '🍋 Lemonomics - Lemonade Stand Business Game',

@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-
-interface GameState {
-  day: number;
-  cash: number;
-  glasses: number;
-  signs: number;
-  price: number;
-  weather: 'sunny' | 'cloudy' | 'rainy' | 'hot';
-  assets: number;
-  bankrupt: boolean;
-}
+import type {
+  DayResult,
+  GamePhase,
+  GameSaveResponse,
+  GameState,
+  SavedGame,
+} from '../shared/types/api';
+import { useSupportPurchase } from './hooks/useSupportPurchase';
 
 interface KarmaBoost {
   multiplier: number;
@@ -38,18 +35,6 @@ interface LeaderboardEntry {
   assets: number;
   lastUpdated: string;
 }
-
-
-
-interface DayResult {
-  glassesSold: number;
-  income: number;
-  expenses: number;
-  profit: number;
-  specialEvent?: string;
-}
-
-type GamePhase = 'intro' | 'dayBriefing' | 'setup' | 'results' | 'gameOver';
 
 export const App: React.FC = () => {
   const [phase, setPhase] = useState<GamePhase>('intro');
@@ -81,21 +66,83 @@ export const App: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [savedGame, setSavedGame] = useState<SavedGame | null>(null);
+  const [isLoadingSave, setIsLoadingSave] = useState(true);
+  const {
+    supporter,
+    loading: supporterLoading,
+    purchasing,
+    message,
+    supportApp,
+  } = useSupportPurchase();
 
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      setIsLoadingSave(false);
+      return;
+    }
+
+    const fetchSavedGame = async () => {
+      try {
+        const response = await fetch('/api/game-save');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data: GameSaveResponse = await response.json();
+        setSavedGame(data.saved ? data.game : null);
+      } catch {
+        // The Devvit API is intentionally unavailable in a local Vite-only preview.
+        setSavedGame(null);
+      } finally {
+        setIsLoadingSave(false);
+      }
+    };
+
+    void fetchSavedGame();
+  }, []);
+
+  const persistGame = async (
+    nextPhase: Exclude<GamePhase, 'intro'>,
+    nextState: GameState,
+    nextResult: DayResult | null
+  ) => {
+    const game: SavedGame = {
+      phase: nextPhase,
+      gameState: nextState,
+      dayResult: nextResult,
+      savedAt: new Date().toISOString(),
+    };
+
+    setSavedGame(game);
+
+    if (import.meta.env.DEV) return;
+
+    try {
+      await fetch('/api/game-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(game),
+      });
+    } catch {
+      // Local previews still retain the in-memory state for the current session.
+    }
+  };
 
   const fetchKarmaBoost = async () => {
+    if (import.meta.env.DEV) return;
+
     try {
       const response = await fetch('/api/karma-boost');
-      if (response.ok) {
+      if (response.ok && response.headers.get('content-type')?.includes('application/json')) {
         const data = await response.json();
         setKarmaBoost(data);
       }
     } catch (error) {
-      console.error('Failed to fetch karma boost:', error);
+      console.warn('Failed to fetch karma boost:', error);
     }
   };
 
   const checkForFlairReward = async (currentDay: number) => {
+    if (import.meta.env.DEV) return;
+
     try {
       const response = await fetch('/api/check-flair', {
         method: 'POST',
@@ -112,11 +159,13 @@ export const App: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error('Failed to check flair reward:', error);
+      console.warn('Failed to check flair reward:', error);
     }
   };
 
   const updateProgress = async (day: number, assets: number) => {
+    if (import.meta.env.DEV) return;
+
     try {
       await fetch('/api/update-progress', {
         method: 'POST',
@@ -126,23 +175,23 @@ export const App: React.FC = () => {
         body: JSON.stringify({ day, assets }),
       });
     } catch (error) {
-      console.error('Failed to update progress:', error);
+      console.warn('Failed to update progress:', error);
     }
   };
 
   const fetchLeaderboard = async () => {
+    if (import.meta.env.DEV) return;
+
     try {
       const response = await fetch('/api/leaderboard');
-      if (response.ok) {
+      if (response.ok && response.headers.get('content-type')?.includes('application/json')) {
         const data = await response.json();
         setLeaderboard(data.topPlayers || []);
       }
     } catch (error) {
-      console.error('Failed to fetch leaderboard:', error);
+      console.warn('Failed to fetch leaderboard:', error);
     }
   };
-
-
 
   // Audio initialization and control
   useEffect(() => {
@@ -171,9 +220,43 @@ export const App: React.FC = () => {
   // Fetch leaderboard when showing results
   useEffect(() => {
     if (phase === 'results') {
-      fetchLeaderboard();
+      void fetchLeaderboard();
     }
   }, [phase]);
+
+  useEffect(() => {
+    window.render_game_to_text = () =>
+      JSON.stringify({
+        coordinateSystem: 'DOM layout; top-left origin; x increases right and y increases down',
+        phase,
+        gameState,
+        inputs,
+        dayResult,
+        karmaBoost,
+        supporter,
+        savedRunAvailable: savedGame !== null,
+      });
+    window.advanceTime = async () => undefined;
+
+    return () => {
+      delete window.render_game_to_text;
+      delete window.advanceTime;
+    };
+  }, [dayResult, gameState, inputs, karmaBoost, phase, savedGame, supporter]);
+
+  useEffect(() => {
+    const handleFullscreen = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() !== 'f') return;
+      if (document.fullscreenElement) {
+        void document.exitFullscreen();
+      } else {
+        void document.documentElement.requestFullscreen();
+      }
+    };
+
+    window.addEventListener('keydown', handleFullscreen);
+    return () => window.removeEventListener('keydown', handleFullscreen);
+  }, []);
 
   const toggleMute = () => {
     if (audioRef.current) {
@@ -195,7 +278,7 @@ export const App: React.FC = () => {
 
   const startGame = async () => {
     await fetchKarmaBoost();
-    setGameState({
+    const initialState: GameState = {
       day: 1,
       cash: 2.0,
       glasses: 0,
@@ -204,9 +287,21 @@ export const App: React.FC = () => {
       weather: generateWeather(),
       assets: 2.0,
       bankrupt: false,
-    });
+    };
+    setGameState(initialState);
+    setDayResult(null);
     setPhase('dayBriefing');
+    void persistGame('dayBriefing', initialState, null);
     // Start the theme music when the game begins
+    startAudio();
+  };
+
+  const continueGame = async () => {
+    if (!savedGame) return;
+    await fetchKarmaBoost();
+    setGameState(savedGame.gameState);
+    setDayResult(savedGame.dayResult);
+    setPhase(savedGame.phase);
     startAudio();
   };
 
@@ -385,19 +480,23 @@ export const App: React.FC = () => {
     const nextDayLemonCost = getLemonCost(gameState.day + 1);
     const isBankrupt = newCash < nextDayLemonCost || newCash < 0;
 
-    setDayResult({ ...adjustedResult, specialEvent });
-    setGameState((prev) => ({
-      ...prev,
+    const nextResult: DayResult = { ...adjustedResult, specialEvent };
+    const nextGameState: GameState = {
+      ...gameState,
       cash: newCash,
       assets: newAssets,
       glasses,
       signs,
       price,
       bankrupt: isBankrupt,
-    }));
+    };
+
+    setDayResult(nextResult);
+    setGameState(nextGameState);
 
     // Update progress in leaderboard
-    updateProgress(gameState.day, newAssets);
+    void updateProgress(gameState.day, newAssets);
+    void persistGame('results', nextGameState, nextResult);
 
     setPhase('results');
   };
@@ -406,6 +505,7 @@ export const App: React.FC = () => {
     // Handle bankruptcy - go directly to game over
     if (gameState.bankrupt) {
       setPhase('gameOver');
+      void persistGame('gameOver', gameState, dayResult);
       return;
     }
 
@@ -414,6 +514,7 @@ export const App: React.FC = () => {
       // Check for final flair reward before ending
       await checkForFlairReward(gameState.day);
       setPhase('gameOver');
+      void persistGame('gameOver', gameState, dayResult);
       return;
     }
 
@@ -424,14 +525,17 @@ export const App: React.FC = () => {
       await checkForFlairReward(nextDayNumber);
     }
 
-    setGameState((prev) => ({
-      ...prev,
+    const nextGameState: GameState = {
+      ...gameState,
       day: nextDayNumber,
       weather: generateWeather(),
-    }));
+    };
 
+    setGameState(nextGameState);
     setInputs({ glasses: '', sugar: '', signs: '', price: '' });
+    setDayResult(null);
     setPhase('dayBriefing');
+    void persistGame('dayBriefing', nextGameState, null);
   };
 
   const getWeatherIcon = (weather: string) => {
@@ -469,6 +573,7 @@ export const App: React.FC = () => {
     return (
       <button
         onClick={toggleMute}
+        aria-label={isMuted ? 'Unmute music' : 'Mute music'}
         className="fixed top-4 right-4 z-40 bg-white/90 hover:bg-white border-2 border-yellow-400 rounded-full p-3 shadow-lg transition-all duration-200 hover:scale-110"
         title={isMuted ? 'Unmute music' : 'Mute music'}
       >
@@ -491,6 +596,19 @@ export const App: React.FC = () => {
           </svg>
         )}
       </button>
+    );
+  };
+
+  const SupporterBadge = () => {
+    if (!supporter) return null;
+
+    return (
+      <div
+        data-testid="supporter-badge"
+        className="fixed left-4 top-4 z-40 rounded-full border-2 border-amber-500 bg-amber-50/95 px-3 py-2 text-xs font-bold text-amber-900 shadow-lg"
+      >
+        ✨ Golden Lemon Supporter
+      </div>
     );
   };
 
@@ -526,9 +644,14 @@ export const App: React.FC = () => {
   if (phase === 'intro') {
     return (
       <>
-        <div className="min-h-screen bg-gradient-to-b from-yellow-200 to-yellow-400 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gradient-to-b from-yellow-200 to-yellow-400 flex items-center justify-center p-4 pt-20">
           <AudioControlButton />
-          <div className="bg-white rounded-lg shadow-xl p-8 max-w-md text-center">
+          <SupporterBadge />
+          <div
+            className={`max-w-md rounded-lg bg-white p-8 text-center shadow-xl ${
+              supporter ? 'ring-4 ring-amber-400' : ''
+            }`}
+          >
             <h1 className="text-4xl font-bold text-yellow-600 mb-4">🍋 Lemonomics</h1>
             <p className="text-gray-700 mb-4">
               Welcome to the classic lemonade stand business game! Start with $2.00 and try to build
@@ -537,22 +660,51 @@ export const App: React.FC = () => {
             <p className="text-sm text-gray-600 mb-6">
               Based on the original 1979 Apple Computer game
             </p>
-            
+
+            <div className="mb-6 space-y-3">
+              {isLoadingSave ? (
+                <p className="text-sm text-gray-500">Checking for your saved stand…</p>
+              ) : savedGame ? (
+                <button
+                  data-testid="continue-run"
+                  onClick={continueGame}
+                  className="w-full rounded-lg bg-green-500 px-6 py-3 text-lg font-bold text-white hover:bg-green-600"
+                >
+                  Continue Day {savedGame.gameState.day} ▶
+                </button>
+              ) : null}
+
+              <button
+                data-testid="start-game"
+                onClick={startGame}
+                className={`w-full rounded-lg px-6 py-3 font-bold ${
+                  savedGame
+                    ? 'border-2 border-yellow-500 bg-white text-yellow-700 hover:bg-yellow-50'
+                    : 'bg-yellow-500 text-lg text-white hover:bg-yellow-600'
+                }`}
+              >
+                {savedGame ? 'Start a New Run' : 'Start Your Stand! 🍋'}
+              </button>
+            </div>
+
             <div className="bg-blue-50 border border-blue-200 p-3 rounded mb-6">
               <p className="text-sm text-blue-800 font-semibold">🎯 Reddit Karma Boosts:</p>
               <p className="text-xs text-blue-700">
-                • 300+ karma: 1.15x sales boost • 1,000+ karma: 1.5x sales boost • 5,000+ karma: 2x sales boost
+                • 300+ karma: 1.15x sales boost • 1,000+ karma: 1.5x sales boost • 5,000+ karma: 2x
+                sales boost
               </p>
               <button
                 onClick={async () => {
                   try {
                     const response = await fetch('/api/subscribe-lemonomics', {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/json' }
+                      headers: { 'Content-Type': 'application/json' },
                     });
                     const data = await response.json();
                     if (data.status === 'success') {
-                      alert(`� Welcoome to r/Lemonomics, ${data.username}! You're now part of the lemon empire!`);
+                      alert(
+                        `🍋 Welcome to r/Lemonomics, ${data.username}! You're now part of the lemon empire!`
+                      );
                     } else if (data.status === 'info' && data.fallback) {
                       alert(`${data.message}\n\nClick OK to visit r/Lemonomics manually!`);
                       window.open('https://reddit.com/r/Lemonomics', '_blank');
@@ -571,12 +723,32 @@ export const App: React.FC = () => {
               </button>
             </div>
 
-            <button
-              onClick={startGame}
-              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg text-lg"
-            >
-              Start Your Stand! 🍋
-            </button>
+            <div className="rounded-lg border-2 border-amber-300 bg-amber-50 p-4 text-left">
+              <p className="font-bold text-amber-900">✨ Support Lemonomics</p>
+              <p className="mt-1 text-xs text-amber-800">
+                Optional and cosmetic. Unlock a permanent Golden Lemon Supporter badge and golden
+                stand theme; the full game stays free.
+              </p>
+              {supporter ? (
+                <p className="mt-3 text-center text-sm font-bold text-amber-900">
+                  Golden Lemon Supporter active — thank you!
+                </p>
+              ) : (
+                <button
+                  data-testid="support-game"
+                  onClick={() => void supportApp()}
+                  disabled={supporterLoading || purchasing}
+                  className="mt-3 w-full rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-amber-950 hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {purchasing ? 'Opening Reddit checkout…' : 'Support with 25 Reddit Gold'}
+                </button>
+              )}
+              {message && (
+                <p aria-live="polite" className="mt-2 text-center text-xs text-amber-900">
+                  {message}
+                </p>
+              )}
+            </div>
           </div>
         </div>
         <FlairNotificationModal />
@@ -597,8 +769,13 @@ export const App: React.FC = () => {
 
     return (
       <>
-        <div className="min-h-screen bg-gradient-to-b from-blue-200 to-blue-300 p-4 flex items-center justify-center">
+        <div
+          className={`min-h-screen bg-gradient-to-b p-4 pt-20 flex items-center justify-center ${
+            supporter ? 'from-amber-200 to-yellow-300' : 'from-blue-200 to-blue-300'
+          }`}
+        >
           <AudioControlButton />
+          <SupporterBadge />
           <div className="w-full max-w-md mx-auto">
             <div className="bg-white rounded-lg shadow-xl p-6 text-center">
               {/* Day Header */}
@@ -649,6 +826,7 @@ export const App: React.FC = () => {
 
               {/* Continue Button */}
               <button
+                data-testid="open-plan"
                 onClick={() => setPhase('setup')}
                 className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-lg text-lg"
               >
@@ -667,8 +845,13 @@ export const App: React.FC = () => {
 
     return (
       <>
-        <div className="min-h-screen bg-gradient-to-b from-amber-100 to-yellow-100 p-4 flex items-center justify-center">
+        <div
+          className={`min-h-screen bg-gradient-to-b p-4 pt-20 flex items-center justify-center ${
+            supporter ? 'from-amber-200 to-yellow-300' : 'from-amber-100 to-yellow-100'
+          }`}
+        >
           <AudioControlButton />
+          <SupporterBadge />
           <div className="w-full max-w-2xl mx-auto">
             {/* Notepad Style Container */}
             <div className="bg-white shadow-2xl transform rotate-1 relative">
@@ -681,7 +864,7 @@ export const App: React.FC = () => {
               </div>
 
               {/* Notepad Content */}
-              <div className="p-8 pl-20 pr-8">
+              <div className="p-6 pl-14 sm:p-8 sm:pl-20">
                 {/* Header with handwritten style */}
                 <div className="text-center mb-8">
                   <h2 className="text-3xl font-bold text-blue-800 transform -rotate-1 font-mono">
@@ -700,12 +883,13 @@ export const App: React.FC = () => {
                     <h3 className="text-xl font-bold text-green-700 mb-4 font-mono">
                       🍋 Today's Recipe:
                     </h3>
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                       <div className="space-y-2">
                         <label className="block text-lg font-semibold text-gray-800 font-mono">
                           Glasses to make:
                         </label>
                         <input
+                          data-testid="glasses-input"
                           type="number"
                           min="0"
                           max="1000"
@@ -732,6 +916,7 @@ export const App: React.FC = () => {
                             Sugar packets:
                           </label>
                           <input
+                            data-testid="sugar-input"
                             type="number"
                             min="0"
                             max="1000"
@@ -759,12 +944,13 @@ export const App: React.FC = () => {
                     <h3 className="text-xl font-bold text-blue-700 mb-4 font-mono">
                       📢 Marketing & Pricing:
                     </h3>
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                       <div className="space-y-2">
                         <label className="block text-lg font-semibold text-gray-800 font-mono">
                           Advertising signs:
                         </label>
                         <input
+                          data-testid="signs-input"
                           type="number"
                           min="0"
                           max="50"
@@ -789,6 +975,7 @@ export const App: React.FC = () => {
                           Price per glass (¢):
                         </label>
                         <input
+                          data-testid="price-input"
                           type="number"
                           min="0"
                           max="100"
@@ -815,7 +1002,7 @@ export const App: React.FC = () => {
                     <h3 className="text-xl font-bold text-orange-700 mb-3 font-mono">
                       💰 Budget Summary:
                     </h3>
-                    <div className="grid grid-cols-2 gap-4 text-lg font-mono">
+                    <div className="grid grid-cols-1 gap-4 text-lg font-mono sm:grid-cols-2">
                       <div>
                         <p className="text-gray-700">
                           <strong>Total Cost:</strong>
@@ -859,6 +1046,7 @@ export const App: React.FC = () => {
                   {/* Action Button */}
                   <div className="text-center pt-4">
                     <button
+                      data-testid="open-stand"
                       onClick={playDay}
                       className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 px-8 rounded-full text-xl shadow-lg transform hover:scale-105 transition-all duration-200 font-mono"
                     >
@@ -878,8 +1066,13 @@ export const App: React.FC = () => {
   if (phase === 'results' && dayResult) {
     return (
       <>
-        <div className="min-h-screen bg-gradient-to-b from-green-200 to-blue-200 p-4 flex items-center justify-center">
+        <div
+          className={`min-h-screen bg-gradient-to-b p-4 pt-20 flex items-center justify-center ${
+            supporter ? 'from-amber-200 to-yellow-300' : 'from-green-200 to-blue-200'
+          }`}
+        >
           <AudioControlButton />
+          <SupporterBadge />
           <div className="w-full max-w-2xl mx-auto">
             {/* Notepad Style Container */}
             <div className="bg-white shadow-2xl transform -rotate-1 relative">
@@ -892,7 +1085,7 @@ export const App: React.FC = () => {
               </div>
 
               {/* Notepad Content */}
-              <div className="p-8 pl-20 pr-8">
+              <div className="p-6 pl-14 sm:p-8 sm:pl-20">
                 {/* Header with handwritten style */}
                 <div className="text-center mb-8">
                   <h2 className="text-3xl font-bold text-green-800 transform -rotate-1 font-mono">
@@ -916,7 +1109,7 @@ export const App: React.FC = () => {
                   <h3 className="text-xl font-bold text-blue-700 mb-4 font-mono">
                     🍋 Today's Business Results:
                   </h3>
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <div className="space-y-3">
                       <div className="font-mono">
                         <span className="text-gray-700">Glasses sold:</span>
@@ -960,21 +1153,25 @@ export const App: React.FC = () => {
                       </div>
                       <div className="font-mono">
                         <span className="text-gray-700">Profit:</span>
-                        <span className={`float-right font-bold ${dayResult.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <span
+                          className={`float-right font-bold ${dayResult.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                        >
                           ${dayResult.profit.toFixed(2)}
                         </span>
                         <div className="border-b-2 border-solid border-gray-600"></div>
                       </div>
                       <div className="font-mono">
                         <span className="text-gray-700 font-bold">Total Assets:</span>
-                        <span className={`float-right font-bold text-lg ${gameState.assets >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <span
+                          className={`float-right font-bold text-lg ${gameState.assets >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                        >
                           ${gameState.assets.toFixed(2)}
                         </span>
                         <div className="border-b-2 border-solid border-gray-600"></div>
                       </div>
                     </div>
                   </div>
-              </div>
+                </div>
 
                 {/* Bankruptcy Alert */}
                 {gameState.bankrupt && (
@@ -986,11 +1183,13 @@ export const App: React.FC = () => {
                         You don't have enough money to continue in business.
                       </p>
                       <p className="text-sm text-red-200">
-                        You need at least ${getLemonCost(gameState.day + 1).toFixed(2)} to make lemonade for tomorrow.
+                        You need at least ${getLemonCost(gameState.day + 1).toFixed(2)} to make
+                        lemonade for tomorrow.
                       </p>
                       <div className="mt-3 p-2 bg-red-600 rounded">
                         <p className="text-xs text-red-100">
-                          💡 Tip: Try making fewer glasses or charging higher prices to stay profitable!
+                          💡 Tip: Try making fewer glasses or charging higher prices to stay
+                          profitable!
                         </p>
                       </div>
                     </div>
@@ -1004,10 +1203,10 @@ export const App: React.FC = () => {
                       <h3 className="font-bold text-lg mb-3 text-center text-orange-700 font-mono">
                         🏆 Top Entrepreneurs
                       </h3>
-                  <div className="space-y-2">
-                    {leaderboard.map((player, index) => (
-                      <div
-                        key={player.username}
+                      <div className="space-y-2">
+                        {leaderboard.map((player, index) => (
+                          <div
+                            key={player.username}
                             className={`flex items-center justify-between p-2 rounded font-mono ${
                               index === 0
                                 ? 'bg-yellow-200 border border-yellow-400'
@@ -1015,22 +1214,22 @@ export const App: React.FC = () => {
                                   ? 'bg-gray-100 border border-gray-300'
                                   : 'bg-orange-100 border border-orange-300'
                             }`}
-                      >
-                        <div className="flex items-center space-x-2">
-                          <span className="text-lg font-bold">
-                            {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-                          </span>
-                          <span className="font-semibold text-gray-800">{player.username}</span>
-                        </div>
-                        <div className="text-right text-sm">
-                          <div className="font-bold text-green-600">
-                            ${player.assets.toFixed(2)}
+                          >
+                            <div className="flex items-center space-x-2">
+                              <span className="text-lg font-bold">
+                                {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                              </span>
+                              <span className="font-semibold text-gray-800">{player.username}</span>
+                            </div>
+                            <div className="text-right text-sm">
+                              <div className="font-bold text-green-600">
+                                ${player.assets.toFixed(2)}
+                              </div>
+                              <div className="text-gray-600">Day {player.day}</div>
+                            </div>
                           </div>
-                          <div className="text-gray-600">Day {player.day}</div>
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
                       <p className="text-xs text-gray-500 text-center mt-2 font-mono">
                         Live leaderboard updates every day!
                       </p>
@@ -1041,6 +1240,7 @@ export const App: React.FC = () => {
                 {/* Continue Button */}
                 <div className="transform rotate-1">
                   <button
+                    data-testid="next-day"
                     onClick={nextDay}
                     className={`w-full font-bold py-4 px-6 rounded-lg font-mono text-lg ${
                       gameState.bankrupt
@@ -1048,7 +1248,9 @@ export const App: React.FC = () => {
                         : 'bg-green-500 hover:bg-green-600 text-white'
                     }`}
                   >
-                    {gameState.bankrupt ? 'Game Over 😢' : `Continue to Day ${gameState.day + 1} ➡️`}
+                    {gameState.bankrupt
+                      ? 'Game Over 😢'
+                      : `Continue to Day ${gameState.day + 1} ➡️`}
                   </button>
                 </div>
               </div>
@@ -1059,8 +1261,6 @@ export const App: React.FC = () => {
       </>
     );
   }
-
-
 
   if (phase === 'gameOver') {
     const isWinner = gameState.day >= 30 && !gameState.bankrupt;
@@ -1076,9 +1276,16 @@ export const App: React.FC = () => {
     return (
       <>
         <div
-          className={`min-h-screen bg-gradient-to-b ${isWinner ? 'from-green-200 to-yellow-200' : 'from-red-200 to-gray-300'} flex items-center justify-center p-4`}
+          className={`min-h-screen bg-gradient-to-b ${
+            supporter
+              ? 'from-amber-200 to-yellow-300'
+              : isWinner
+                ? 'from-green-200 to-yellow-200'
+                : 'from-red-200 to-gray-300'
+          } flex items-center justify-center p-4 pt-20`}
         >
           <AudioControlButton />
+          <SupporterBadge />
           <div className="bg-white rounded-lg shadow-xl p-8 max-w-md text-center">
             <h1
               className={`text-3xl font-bold mb-4 ${isWinner ? 'text-green-600' : 'text-red-600'}`}
@@ -1105,7 +1312,8 @@ export const App: React.FC = () => {
                     <div className="text-6xl mb-4">💸</div>
                     <p className="text-xl font-bold text-red-600 mb-2">BANKRUPTCY!</p>
                     <p className="text-gray-700 mb-4">
-                      You ran out of money on Day {gameState.day} and couldn't continue your lemonade business.
+                      You ran out of money on Day {gameState.day} and couldn't continue your
+                      lemonade business.
                     </p>
                     <div className="bg-red-50 border border-red-200 p-4 rounded-lg mb-4">
                       <p className="text-sm text-red-800 mb-2">
@@ -1125,7 +1333,8 @@ export const App: React.FC = () => {
                 ) : (
                   <div>
                     <p className="text-gray-700 mb-4">
-                      You lasted {gameState.day} day{gameState.day !== 1 ? 's' : ''} in the lemonade business!
+                      You lasted {gameState.day} day{gameState.day !== 1 ? 's' : ''} in the lemonade
+                      business!
                     </p>
                     <p className="text-lg font-semibold mb-6">
                       Final Assets: ${gameState.assets.toFixed(2)}
@@ -1136,12 +1345,13 @@ export const App: React.FC = () => {
             )}
 
             <button
+              data-testid="play-again"
               onClick={async () => {
                 // Reset player data in Redis
                 try {
                   await fetch('/api/reset-player', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
                   });
                 } catch (error) {
                   console.error('Failed to reset player data:', error);
@@ -1160,6 +1370,7 @@ export const App: React.FC = () => {
                 });
                 setDayResult(null);
                 setFlairNotification(null);
+                setSavedGame(null);
                 // Stop audio when returning to intro
                 if (audioRef.current) {
                   audioRef.current.pause();

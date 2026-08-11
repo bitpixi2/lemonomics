@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "license": "BSD-3-Clause",
   "type": "module",
+  "packageManager": "pnpm@9.15.4",
   "scripts": {
     "build": "cd apps/karma-lemonade-stand && npm run build",
     "dev": "cd apps/karma-lemonade-stand && npm run dev",
@@ -18,8 +19,8 @@
     "login": "devvit login"
   },
   "dependencies": {
-    "@devvit/web": "0.12.1",
-    "devvit": "0.12.1",
+    "@devvit/web": "0.13.10",
+    "devvit": "0.13.10",
     "express": "5.1.0"
   },
   "devDependencies": {

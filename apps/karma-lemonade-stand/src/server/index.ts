@@ -1,6 +1,17 @@
 import express from 'express';
-import { InitResponse, IncrementResponse, DecrementResponse } from '../shared/types/api';
+import type {
+  DayResult,
+  DecrementResponse,
+  GamePhase,
+  GameSaveResponse,
+  GameState,
+  IncrementResponse,
+  InitResponse,
+  SavedGame,
+  SupporterStatusResponse,
+} from '../shared/types/api';
 import { redis, reddit, createServer, context, getServerPort } from '@devvit/web/server';
+import type { PaymentHandlerResponse } from '@devvit/web/server';
 import { createPost } from './core/post';
 
 const app = express();
@@ -13,6 +24,154 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.text());
 
 const router = express.Router();
+
+const GOLDEN_LEMON_SUPPORTER_SKU = 'golden-lemon-supporter';
+
+type PaymentOrder = {
+  products: Array<{ sku: string }>;
+};
+
+const isGamePhase = (value: unknown): value is Exclude<GamePhase, 'intro'> =>
+  value === 'dayBriefing' || value === 'setup' || value === 'results' || value === 'gameOver';
+
+const isGameState = (value: unknown): value is GameState => {
+  if (!value || typeof value !== 'object') return false;
+  const game = value as Partial<GameState>;
+  return (
+    Number.isInteger(game.day) &&
+    (game.day ?? 0) >= 1 &&
+    (game.day ?? 0) <= 30 &&
+    typeof game.cash === 'number' &&
+    Number.isFinite(game.cash) &&
+    typeof game.assets === 'number' &&
+    Number.isFinite(game.assets) &&
+    Number.isInteger(game.glasses) &&
+    Number.isInteger(game.signs) &&
+    Number.isInteger(game.price) &&
+    typeof game.bankrupt === 'boolean' &&
+    ['sunny', 'cloudy', 'rainy', 'hot'].includes(game.weather ?? '')
+  );
+};
+
+const isDayResult = (value: unknown): value is DayResult => {
+  if (!value || typeof value !== 'object') return false;
+  const result = value as Partial<DayResult>;
+  return (
+    Number.isInteger(result.glassesSold) &&
+    typeof result.income === 'number' &&
+    Number.isFinite(result.income) &&
+    typeof result.expenses === 'number' &&
+    Number.isFinite(result.expenses) &&
+    typeof result.profit === 'number' &&
+    Number.isFinite(result.profit)
+  );
+};
+
+const isSavedGame = (value: unknown): value is SavedGame => {
+  if (!value || typeof value !== 'object') return false;
+  const saved = value as Partial<SavedGame>;
+  return (
+    isGamePhase(saved.phase) &&
+    isGameState(saved.gameState) &&
+    (saved.dayResult === null || isDayResult(saved.dayResult))
+  );
+};
+
+// Called by Reddit after a completed Gold purchase.
+router.post<string, never, PaymentHandlerResponse, PaymentOrder>(
+  '/internal/payments/fulfill',
+  async (req, res): Promise<void> => {
+    try {
+      const { userId } = context;
+      const order = req.body;
+
+      if (!userId) {
+        res.json({ success: false, reason: 'Sign in to support Lemonomics.' });
+        return;
+      }
+
+      if (!order.products.some((product) => product.sku === GOLDEN_LEMON_SUPPORTER_SKU)) {
+        res.json({ success: false, reason: 'The Golden Lemon purchase could not be verified.' });
+        return;
+      }
+
+      await redis.set(`supporter:${userId}`, 'true');
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Support purchase fulfillment error:', error);
+      res.json({ success: false, reason: 'Unable to activate Golden Lemon Supporter.' });
+    }
+  }
+);
+
+router.post<string, never, PaymentHandlerResponse, PaymentOrder>(
+  '/internal/payments/refund',
+  async (req, res): Promise<void> => {
+    try {
+      const { userId } = context;
+      const order = req.body;
+
+      if (userId && order.products.some((product) => product.sku === GOLDEN_LEMON_SUPPORTER_SKU)) {
+        await redis.del(`supporter:${userId}`);
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Support purchase refund error:', error);
+      res.json({ success: false, reason: 'Unable to remove Golden Lemon Supporter.' });
+    }
+  }
+);
+
+router.get<object, SupporterStatusResponse>(
+  '/api/supporter-status',
+  async (_req, res): Promise<void> => {
+    const { userId } = context;
+    const supporter = userId ? (await redis.get(`supporter:${userId}`)) === 'true' : false;
+    res.json({ type: 'supporter-status', supporter });
+  }
+);
+
+router.get<object, GameSaveResponse>('/api/game-save', async (_req, res): Promise<void> => {
+  const { userId } = context;
+  if (!userId) {
+    res.json({ type: 'game-save', saved: false });
+    return;
+  }
+
+  const value = await redis.get(`game-save:${userId}`);
+  if (!value) {
+    res.json({ type: 'game-save', saved: false });
+    return;
+  }
+
+  try {
+    const game: unknown = JSON.parse(value);
+    if (!isSavedGame(game)) throw new Error('Saved game failed validation');
+    res.json({ type: 'game-save', saved: true, game });
+  } catch (error) {
+    console.error('Invalid saved game:', error);
+    await redis.del(`game-save:${userId}`);
+    res.json({ type: 'game-save', saved: false });
+  }
+});
+
+router.post<object, GameSaveResponse, SavedGame>(
+  '/api/game-save',
+  async (req, res): Promise<void> => {
+    const { userId } = context;
+    if (!userId || !isSavedGame(req.body)) {
+      res.json({ type: 'game-save', saved: false });
+      return;
+    }
+
+    const game: SavedGame = { ...req.body, savedAt: new Date().toISOString() };
+    await redis.set(`game-save:${userId}`, JSON.stringify(game), {
+      expiration: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
+    });
+    res.json({ type: 'game-save', saved: true, game });
+  }
+);
 
 router.get<{ postId: string }, InitResponse | { status: string; message: string }>(
   '/api/init',
@@ -180,10 +339,11 @@ router.post('/api/reset-player', async (_req, res): Promise<void> => {
 
     // Remove player from leaderboard
     await redis.zRem('leaderboard', [userId]);
-    
+
     // Remove player data
     const playerKey = `player:${userId}`;
     await redis.del(playerKey);
+    await redis.del(`game-save:${userId}`);
 
     console.log(`🔄 Reset player data for user: ${userId}`);
 
@@ -200,8 +360,6 @@ router.post('/api/reset-player', async (_req, res): Promise<void> => {
   }
 });
 
-
-
 // Health check endpoint for Kiro hook monitoring
 router.get('/api/health', async (_req, res): Promise<void> => {
   try {
@@ -216,28 +374,24 @@ router.get('/api/health', async (_req, res): Promise<void> => {
         leaderboard: true,
         flair_awarding: true,
         karma_boost: true,
-        game_mechanics: true
-      }
+        game_mechanics: true,
+      },
     };
-    
+
     res.json(health);
   } catch (error) {
     res.status(500).json({
       status: 'unhealthy',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
-
-
-
-
 
 // Subscribe user to r/Lemonomics
 router.post('/api/subscribe-lemonomics', async (_req, res): Promise<void> => {
   try {
     const currentUser = await reddit.getCurrentUser();
-    
+
     if (!currentUser) {
       res.status(400).json({
         status: 'error',
@@ -255,17 +409,17 @@ router.post('/api/subscribe-lemonomics', async (_req, res): Promise<void> => {
       res.json({
         status: 'success',
         message: `Successfully subscribed to r/Lemonomics!`,
-        username: currentUser.username
+        username: currentUser.username,
       });
     } catch (subscribeError) {
       console.error('Subscription failed:', subscribeError);
-      
+
       // Fallback: provide manual subscription guidance
       res.json({
         status: 'info',
         message: `Please visit r/Lemonomics to subscribe manually for the full experience!`,
         username: currentUser.username,
-        fallback: true
+        fallback: true,
       });
     }
   } catch (error) {
@@ -276,10 +430,6 @@ router.post('/api/subscribe-lemonomics', async (_req, res): Promise<void> => {
     });
   }
 });
-
-
-
-
 
 // Get leaderboard top 3
 router.get('/api/leaderboard', async (_req, res): Promise<void> => {

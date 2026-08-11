@@ -1,6 +1,21 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
   "name": "lemonomics-game",
+  "payments": {
+    "products": [
+      {
+        "sku": "golden-lemon-supporter",
+        "displayName": "Golden Lemon Supporter",
+        "description": "Support Lemonomics and unlock a permanent golden badge and stand theme.",
+        "price": 25,
+        "accountingType": "DURABLE"
+      }
+    ],
+    "endpoints": {
+      "fulfillOrder": "/internal/payments/fulfill",
+      "refundOrder": "/internal/payments/refund"
+    }
+  },
   "post": {
     "dir": "dist/client",
     "entrypoints": {
@@ -34,9 +49,7 @@
     "redis": true,
     "reddit": {
       "enable": true,
-      "asUser": [
-        "SUBSCRIBE_TO_SUBREDDIT"
-      ]
+      "asUser": ["SUBSCRIBE_TO_SUBREDDIT"]
     }
   },
   "dev": {
