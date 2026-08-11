@@ -22,7 +22,6 @@
       ],
       "env": {
         "FASTMCP_LOG_LEVEL": "ERROR",
-        "PATH": "/Users/kaseyjean/.local/bin:/Users/kaseyjean/.nvm/versions/node/v22.20.0/bin:/usr/local/bin:/usr/bin:/bin",
         "REDDIT_USER_AGENT": "KarmaLemonadeStand/1.0 by u/bitpixi"
       },
       "disabled": true,

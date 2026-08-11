@@ -9,7 +9,7 @@ export default defineConfig({
     emptyOutDir: false,
     ssr: 'index.ts',
     outDir: '../../dist/server',
-    target: 'node22',
+    target: 'node24',
     sourcemap: true,
     rollupOptions: {
       external: [...builtinModules],

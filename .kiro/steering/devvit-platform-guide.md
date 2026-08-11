@@ -120,7 +120,7 @@ Developers can specify a preferred test subreddit in `package.json`:
 
 ### Critical Requirements
 
-- **Node.js version**: 22.2.0 or higher
+- **Node.js version**: 24.18.0 for the supported local and hosted runtime
 - **Project name**: Cannot be changed after creation (required for deployment)
 - **File structure**: Must maintain standard Devvit folder structure
 

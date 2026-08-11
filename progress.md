@@ -67,3 +67,12 @@ Original prompt: Take a look at https://www.reddit.com/r/lemonomics_game_dev/ de
 - Withdrew the superseded `v0.0.90` review request, uploaded the source archive, completed Reddit's remote build, and successfully submitted `v0.0.91` for public review.
 - Installed the exact review build, `v0.0.91`, in `r/lemonomics_game_dev` and verified that production `r/Lemonomics` remains on `v0.0.87`.
 - Reddit's payment-verification check reports success. Real Gold checkout still requires the product/app approval path; no real Gold purchase was attempted.
+
+## 2026-08-11 Devvit 0.14.0 upgrade
+
+- Aligned `devvit`, `@devvit/web`, `@devvit/public-api`, and `@devvit/payments` to stable `0.14.0`, with TypeScript `5.8.3` and Node 24 type definitions.
+- Matched Reddit's Node 24 migration guidance: `.nvmrc` and CI use `24.18.0`, both package entry points require Node 24, and the server bundle targets `node24`.
+- Removed Kiro's stale PATH override to the original machine's Node 22 installation so its MCP configuration inherits the active environment.
+- Under exact Node `24.18.0`, frozen install, Devvit dependency sync, type-check, lint, and client/server production builds pass.
+- The standard web-game client and Playwright CLI verified the Daily Spin flow, a complete profitable Day 1 through Day 2, deterministic game state, desktop/mobile layout, no horizontal overflow, and no browser console errors.
+- Private Devvit upload and development-subreddit installation are the remaining release steps; production stays on `v0.0.87` and public review `v0.0.91` is not being disturbed.
