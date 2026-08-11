@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { context as devvitContext, navigateTo } from '@devvit/web/client';
 import type {
+  DailySpinResponse,
   DayResult,
   GamePhase,
   GameSaveResponse,
   GameState,
   SavedGame,
 } from '../shared/types/api';
+import { DAILY_SPIN_CHALLENGES } from '../shared/types/api';
 import { useSupportPurchase } from './hooks/useSupportPurchase';
 
 interface KarmaBoost {
@@ -64,10 +67,19 @@ export const App: React.FC = () => {
   const [flairNotification, setFlairNotification] = useState<FlairCheckResponse | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const dailySpinDialogRef = useRef<HTMLElement | null>(null);
+  const dailySpinTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const wasDailySpinOpenRef = useRef(false);
 
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [savedGame, setSavedGame] = useState<SavedGame | null>(null);
   const [isLoadingSave, setIsLoadingSave] = useState(true);
+  const [dailySpin, setDailySpin] = useState<DailySpinResponse | null>(null);
+  const [isDailySpinOpen, setIsDailySpinOpen] = useState(false);
+  const [isLoadingDailySpin, setIsLoadingDailySpin] = useState(true);
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [wheelRotation, setWheelRotation] = useState(0);
+  const [dailySpinMessage, setDailySpinMessage] = useState('');
   const {
     supporter,
     loading: supporterLoading,
@@ -97,6 +109,41 @@ export const App: React.FC = () => {
     };
 
     void fetchSavedGame();
+  }, []);
+
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      setDailySpin({
+        type: 'daily-spin',
+        date: new Date().toISOString().slice(0, 10),
+        signedIn: true,
+        spun: false,
+      });
+      setIsLoadingDailySpin(false);
+      return;
+    }
+
+    const fetchDailySpin = async () => {
+      try {
+        const response = await fetch('/api/daily-spin');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data: DailySpinResponse = await response.json();
+        setDailySpin(data);
+
+        if (data.challenge) {
+          const challengeIndex = DAILY_SPIN_CHALLENGES.findIndex(
+            (challenge) => challenge.id === data.challenge?.id
+          );
+          if (challengeIndex >= 0) setWheelRotation(-challengeIndex * 90);
+        }
+      } catch {
+        setDailySpin(null);
+      } finally {
+        setIsLoadingDailySpin(false);
+      }
+    };
+
+    void fetchDailySpin();
   }, []);
 
   const persistGame = async (
@@ -235,6 +282,13 @@ export const App: React.FC = () => {
         karmaBoost,
         supporter,
         savedRunAvailable: savedGame !== null,
+        dailySpin: {
+          open: isDailySpinOpen,
+          loading: isLoadingDailySpin,
+          spinning: isSpinning,
+          spun: dailySpin?.spun ?? false,
+          challenge: dailySpin?.challenge ?? null,
+        },
       });
     window.advanceTime = async () => undefined;
 
@@ -242,7 +296,19 @@ export const App: React.FC = () => {
       delete window.render_game_to_text;
       delete window.advanceTime;
     };
-  }, [dayResult, gameState, inputs, karmaBoost, phase, savedGame, supporter]);
+  }, [
+    dailySpin,
+    dayResult,
+    gameState,
+    inputs,
+    isDailySpinOpen,
+    isLoadingDailySpin,
+    isSpinning,
+    karmaBoost,
+    phase,
+    savedGame,
+    supporter,
+  ]);
 
   useEffect(() => {
     const handleFullscreen = (event: KeyboardEvent) => {
@@ -257,6 +323,53 @@ export const App: React.FC = () => {
     window.addEventListener('keydown', handleFullscreen);
     return () => window.removeEventListener('keydown', handleFullscreen);
   }, []);
+
+  useEffect(() => {
+    if (!isDailySpinOpen) return;
+
+    const handleDialogKeys = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !isSpinning) {
+        setIsDailySpinOpen(false);
+        return;
+      }
+
+      if (event.key !== 'Tab') return;
+      const dialog = dailySpinDialogRef.current;
+      if (!dialog) return;
+
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), textarea:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
+        )
+      );
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!first || !last) return;
+
+      if (!dialog.contains(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleDialogKeys);
+    return () => window.removeEventListener('keydown', handleDialogKeys);
+  }, [isDailySpinOpen, isSpinning]);
+
+  useEffect(() => {
+    const wasOpen = wasDailySpinOpenRef.current;
+    wasDailySpinOpenRef.current = isDailySpinOpen;
+
+    if (wasOpen && !isDailySpinOpen) {
+      window.requestAnimationFrame(() => dailySpinTriggerRef.current?.focus());
+    }
+  }, [isDailySpinOpen]);
 
   const toggleMute = () => {
     if (audioRef.current) {
@@ -303,6 +416,103 @@ export const App: React.FC = () => {
     setDayResult(savedGame.dayResult);
     setPhase(savedGame.phase);
     startAudio();
+  };
+
+  const spinDaily = async () => {
+    if (isSpinning || dailySpin?.spun) return;
+
+    setIsSpinning(true);
+    setDailySpinMessage('');
+
+    try {
+      let result: DailySpinResponse;
+
+      if (import.meta.env.DEV) {
+        const date = new Date().toISOString().slice(0, 10);
+        const challenge =
+          DAILY_SPIN_CHALLENGES[new Date().getUTCDate() % DAILY_SPIN_CHALLENGES.length] ??
+          DAILY_SPIN_CHALLENGES[0];
+        if (!challenge) throw new Error('No daily spin challenges are configured.');
+        result = {
+          type: 'daily-spin',
+          date,
+          signedIn: true,
+          spun: true,
+          challenge,
+          commentUrl: 'https://www.reddit.com/r/lemonomics_game_dev/',
+        };
+      } else {
+        const response = await fetch('/api/daily-spin', { method: 'POST' });
+        result = (await response.json()) as DailySpinResponse;
+        if (!response.ok) throw new Error(result.message ?? `HTTP ${response.status}`);
+      }
+
+      if (!result.challenge) {
+        throw new Error(result.message ?? 'The wheel did not settle. Please try again.');
+      }
+
+      const challengeIndex = DAILY_SPIN_CHALLENGES.findIndex(
+        (challenge) => challenge.id === result.challenge?.id
+      );
+      if (challengeIndex < 0) throw new Error('The wheel returned an unknown challenge.');
+
+      setWheelRotation((current) => {
+        const normalized = ((current % 360) + 360) % 360;
+        const target = (((-challengeIndex * 90) % 360) + 360) % 360;
+        return current + 1440 + target - normalized;
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      setDailySpin(result);
+      window.requestAnimationFrame(() => {
+        dailySpinDialogRef.current
+          ?.querySelector<HTMLElement>('[data-testid="daily-spin-result"]')
+          ?.focus({ preventScroll: true });
+      });
+    } catch (error) {
+      setDailySpinMessage(error instanceof Error ? error.message : 'Unable to spin right now.');
+    } finally {
+      setIsSpinning(false);
+    }
+  };
+
+  const copyDailySpinStarter = async () => {
+    if (!dailySpin?.challenge) return;
+
+    try {
+      await navigator.clipboard.writeText(dailySpin.challenge.commentStarter);
+      setDailySpinMessage('Comment prompt copied. Add your own recipe or image before posting.');
+    } catch {
+      setDailySpinMessage(
+        'Select the prompt below to copy it, then add your own answer on Reddit.'
+      );
+    }
+  };
+
+  const openDailySpinComments = async () => {
+    if (import.meta.env.DEV) {
+      setDailySpinMessage('In Reddit, this opens the pinned Daily Lemon Spin comment.');
+      return;
+    }
+
+    const fallbackUrl = devvitContext.postId
+      ? `https://www.reddit.com/comments/${devvitContext.postId.slice(3)}`
+      : 'https://www.reddit.com/r/Lemonomics/';
+    let commentUrl = dailySpin?.commentUrl ?? fallbackUrl;
+    setDailySpinMessage('Opening the pinned Daily Lemon Spin comment…');
+
+    try {
+      const response = await fetch('/api/daily-spin', { method: 'POST' });
+      const refreshedSpin = (await response.json()) as DailySpinResponse;
+      if (response.ok) {
+        setDailySpin(refreshedSpin);
+        commentUrl = refreshedSpin.commentUrl ?? commentUrl;
+      }
+    } catch {
+      // The current post remains a safe fallback if Reddit cannot refresh the anchor comment.
+    }
+
+    navigateTo({ url: commentUrl });
   };
 
   const generateWeather = (): 'sunny' | 'cloudy' | 'rainy' | 'hot' => {
@@ -612,6 +822,185 @@ export const App: React.FC = () => {
     );
   };
 
+  const renderDailySpinModal = () => {
+    if (!isDailySpinOpen) return null;
+
+    const challenge = dailySpin?.challenge;
+    const wheelPositions = [
+      'left-1/2 top-4 -translate-x-1/2',
+      'right-4 top-1/2 -translate-y-1/2',
+      'bottom-4 left-1/2 -translate-x-1/2',
+      'left-4 top-1/2 -translate-y-1/2',
+    ];
+
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget && !isSpinning) setIsDailySpinOpen(false);
+        }}
+      >
+        <section
+          ref={dailySpinDialogRef}
+          data-testid="daily-spin-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="daily-spin-title"
+          className="max-h-[calc(100vh-1.5rem)] w-full max-w-sm overflow-y-auto rounded-2xl border-4 border-yellow-400 bg-white p-5 text-center shadow-2xl"
+        >
+          <div className="flex items-start justify-between gap-3 text-left">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-emerald-700">
+                Free community challenge
+              </p>
+              <h2 id="daily-spin-title" className="text-2xl font-black text-yellow-700">
+                🍋 Daily Lemon Spin
+              </h2>
+              <p className="mt-1 text-xs text-gray-600">One server-verified spin each UTC day.</p>
+            </div>
+            <button
+              data-testid="daily-spin-close"
+              type="button"
+              autoFocus
+              aria-label="Close daily spin"
+              disabled={isSpinning}
+              onClick={() => setIsDailySpinOpen(false)}
+              className="rounded-full bg-gray-100 px-3 py-1.5 text-lg font-bold text-gray-600 hover:bg-gray-200 disabled:opacity-50"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="relative mx-auto mt-5 h-56 w-56">
+            <div className="absolute -top-4 left-1/2 z-20 -translate-x-1/2 text-3xl text-red-600">
+              ▼
+            </div>
+            <div
+              aria-label="Recipe and lemon image challenge wheel"
+              className="absolute inset-0 rounded-full border-8 border-yellow-500 shadow-lg"
+              style={{
+                background:
+                  'conic-gradient(from -45deg, #fde047 0deg 90deg, #a7f3d0 90deg 180deg, #bfdbfe 180deg 270deg, #fecdd3 270deg 360deg)',
+                transform: `rotate(${wheelRotation}deg)`,
+                transition: isSpinning
+                  ? 'transform 850ms cubic-bezier(0.12, 0.7, 0.18, 1)'
+                  : 'none',
+              }}
+            >
+              {DAILY_SPIN_CHALLENGES.map((item, index) => (
+                <div
+                  key={item.id}
+                  title={item.label}
+                  className={`absolute flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-2xl shadow ${wheelPositions[index]}`}
+                >
+                  {item.emoji}
+                </div>
+              ))}
+            </div>
+            <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+              {!challenge ? (
+                <button
+                  data-testid="daily-spin-action"
+                  type="button"
+                  disabled={isLoadingDailySpin || isSpinning || dailySpin?.signedIn === false}
+                  onClick={() => void spinDaily()}
+                  className="pointer-events-auto flex h-20 w-20 items-center justify-center rounded-full border-4 border-white bg-emerald-600 text-sm font-black uppercase text-white shadow-xl hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+                >
+                  {isLoadingDailySpin ? 'Loading' : isSpinning ? 'Spinning' : 'Spin'}
+                </button>
+              ) : (
+                <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white bg-emerald-600 text-4xl shadow-xl">
+                  🍋
+                </div>
+              )}
+            </div>
+          </div>
+
+          {!challenge && (
+            <div className="mt-4 grid grid-cols-2 gap-2 text-left text-xs text-gray-700">
+              {DAILY_SPIN_CHALLENGES.map((item) => (
+                <div key={item.id} className="rounded-lg bg-yellow-50 px-2 py-1.5">
+                  <span className="mr-1" aria-hidden="true">
+                    {item.emoji}
+                  </span>
+                  {item.label}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {challenge && (
+            <div
+              data-testid="daily-spin-result"
+              tabIndex={-1}
+              aria-live="polite"
+              className="mt-5 rounded-xl border-2 border-emerald-300 bg-emerald-50 p-4 text-left"
+            >
+              <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">
+                Today you landed on
+              </p>
+              <h3 className="mt-1 text-xl font-black text-emerald-900">
+                {challenge.emoji} {challenge.label}
+              </h3>
+              <p className="mt-2 text-sm text-emerald-950">{challenge.prompt}</p>
+              {challenge.category === 'image' && (
+                <p className="mt-2 text-xs font-semibold text-emerald-800">
+                  Attach your image with Reddit's native image button. Only post work you made or
+                  have permission to share.
+                </p>
+              )}
+              <label
+                className="mt-3 block text-xs font-bold text-emerald-900"
+                htmlFor="spin-starter"
+              >
+                Optional comment starter
+              </label>
+              <textarea
+                id="spin-starter"
+                readOnly
+                value={challenge.commentStarter}
+                rows={5}
+                className="mt-1 w-full resize-none rounded-lg border border-emerald-300 bg-white p-2 text-xs text-gray-800"
+              />
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => void copyDailySpinStarter()}
+                  className="rounded-lg border-2 border-emerald-600 bg-white px-3 py-2 text-sm font-bold text-emerald-800 hover:bg-emerald-100"
+                >
+                  Copy prompt
+                </button>
+                <button
+                  data-testid="daily-spin-comments"
+                  type="button"
+                  onClick={() => void openDailySpinComments()}
+                  className="rounded-lg bg-orange-500 px-3 py-2 text-sm font-bold text-white hover:bg-orange-600"
+                >
+                  Open pinned comments
+                </button>
+              </div>
+              <p className="mt-3 text-xs text-gray-600">
+                Reply there in your own words. Posting is optional and never changes your game,
+                rewards, or Gold.
+              </p>
+            </div>
+          )}
+
+          {dailySpin?.signedIn === false && (
+            <p className="mt-4 rounded-lg bg-orange-50 p-3 text-sm font-semibold text-orange-800">
+              {dailySpin.message}
+            </p>
+          )}
+          {dailySpinMessage && (
+            <p aria-live="polite" className="mt-3 text-sm font-semibold text-gray-700">
+              {dailySpinMessage}
+            </p>
+          )}
+        </section>
+      </div>
+    );
+  };
+
   // Flair notification modal
   const FlairNotificationModal = () => {
     if (!flairNotification) return null;
@@ -644,7 +1033,11 @@ export const App: React.FC = () => {
   if (phase === 'intro') {
     return (
       <>
-        <div className="min-h-screen bg-gradient-to-b from-yellow-200 to-yellow-400 flex items-center justify-center p-4 pt-20">
+        <div
+          inert={isDailySpinOpen ? true : undefined}
+          aria-hidden={isDailySpinOpen ? true : undefined}
+          className="min-h-screen bg-gradient-to-b from-yellow-200 to-yellow-400 flex items-center justify-center p-4 pt-20"
+        >
           <AudioControlButton />
           <SupporterBadge />
           <div
@@ -684,6 +1077,27 @@ export const App: React.FC = () => {
                 }`}
               >
                 {savedGame ? 'Start a New Run' : 'Start Your Stand! 🍋'}
+              </button>
+
+              <button
+                ref={dailySpinTriggerRef}
+                data-testid="daily-spin-open"
+                type="button"
+                onClick={() => {
+                  setDailySpinMessage('');
+                  setIsDailySpinOpen(true);
+                }}
+                className="w-full rounded-lg border-2 border-emerald-500 bg-emerald-50 px-4 py-3 text-left text-emerald-900 hover:bg-emerald-100"
+              >
+                <span className="flex items-center justify-between gap-3">
+                  <span className="font-black">🎡 Daily Lemon Spin</span>
+                  <span className="rounded-full bg-emerald-600 px-2 py-1 text-xs font-bold text-white">
+                    {dailySpin?.spun ? "View today's prompt" : 'Spin free'}
+                  </span>
+                </span>
+                <span className="mt-1 block text-xs">
+                  Land on a lemon recipe or image challenge, then share it in the pinned comments.
+                </span>
               </button>
             </div>
 
@@ -740,7 +1154,7 @@ export const App: React.FC = () => {
                   disabled={supporterLoading || purchasing}
                   className="mt-3 w-full rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-amber-950 hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {purchasing ? 'Opening Reddit checkout…' : 'Support with 25 Reddit Gold'}
+                  {purchasing ? 'Opening Reddit checkout…' : 'Support with 5 Reddit Gold'}
                 </button>
               )}
               {message && (
@@ -751,6 +1165,7 @@ export const App: React.FC = () => {
             </div>
           </div>
         </div>
+        {renderDailySpinModal()}
         <FlairNotificationModal />
       </>
     );

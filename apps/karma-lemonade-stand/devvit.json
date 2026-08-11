@@ -7,7 +7,7 @@
         "sku": "golden-lemon-supporter",
         "displayName": "Golden Lemon Supporter",
         "description": "Support Lemonomics and unlock a permanent golden badge and stand theme.",
-        "price": 25,
+        "price": 5,
         "accountingType": "DURABLE"
       }
     ],

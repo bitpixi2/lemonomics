@@ -17,7 +17,7 @@ Original prompt: Take a look at https://www.reddit.com/r/lemonomics_game_dev/ de
 
 - Upgraded the app to Devvit Web 0.13.10 and removed the obsolete custom-post splash payload.
 - Added Redis-backed save/resume, including validated stored state and reset cleanup.
-- Added a 25 Reddit Gold durable `Golden Lemon Supporter` product with fulfillment, refund handling, a cosmetic badge, and a golden theme. The full game remains free.
+- Added a 5 Reddit Gold durable `Golden Lemon Supporter` product with fulfillment, refund handling, a cosmetic badge, and a golden theme. The full game remains free.
 - Added deterministic `render_game_to_text` and `advanceTime` hooks plus stable interaction test IDs.
 - Improved small-screen form/result layouts and fixed the casing issue that broke type checking on case-sensitive systems.
 - TypeScript, ESLint, client build, and server build pass.
@@ -49,3 +49,14 @@ Original prompt: Take a look at https://www.reddit.com/r/lemonomics_game_dev/ de
 
 - The first private upload was rejected because a stale npm-installed `@devvit/public-api@0.12.1` directory shadowed pnpm's 0.13.10 package graph. Declaring `@devvit/payments` and `@devvit/public-api` directly at 0.13.10 resolved all required package versions and the retry succeeded.
 - GitHub Actions failed before installing dependencies because the workflow hardcoded pnpm 8 while `package.json` declares pnpm 9.15.4. The workflow also called a nonexistent test script. The repaired run `31453435310` passed its frozen install, type-check, lint, and build; a follow-up updates the action runtimes to their current Node 24 releases to remove the deprecation warning.
+
+## 2026-08-11 daily community challenge
+
+- The owner chose a Daily Lemon Spin combining lemon-recipe prompts and original lemon-image prompts, with players replying in comments after they spin.
+- Changed the durable Golden Lemon Supporter product and checkout wording from 25 to 5 Reddit Gold. The cosmetic entitlement and free core game are unchanged.
+- Added four Daily Lemon Spin outcomes: Classic Recipe, Recipe Remix, Lemon Photo, and Lemon Art.
+- The server assigns and stores one outcome per signed-in player per UTC day. Concurrent requests converge on the same Redis-backed result.
+- The first spin on each game post creates one distinguished, sticky app comment. Players use an explicit button to open that thread and write their own reply or attach an image through Reddit's native composer; the app never posts as the player and comments do not affect gameplay, rewards, or Gold.
+- Added copyable, fill-in comment starters, content-ownership reminders, signed-out handling, retry/fallback behavior, a responsive wheel modal, Escape/backdrop closing, and daily-spin state in `render_game_to_text`.
+- Local TypeScript, ESLint, client/server builds, desktop gameplay regression, desktop and 390 px wheel interactions, clipboard behavior, machine-readable state, overflow, and console checks pass. The web-game standard Playwright client and Playwright CLI screenshots were visually inspected.
+- Live Devvit upload, development-subreddit installation, and revised public review submission are still pending this final review pass. No Gold purchase has been attempted.

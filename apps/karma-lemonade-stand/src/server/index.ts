@@ -1,5 +1,7 @@
 import express from 'express';
 import type {
+  DailySpinChallenge,
+  DailySpinResponse,
   DayResult,
   DecrementResponse,
   GamePhase,
@@ -10,6 +12,7 @@ import type {
   SavedGame,
   SupporterStatusResponse,
 } from '../shared/types/api';
+import { DAILY_SPIN_CHALLENGES } from '../shared/types/api';
 import { redis, reddit, createServer, context, getServerPort } from '@devvit/web/server';
 import type { PaymentHandlerResponse } from '@devvit/web/server';
 import { createPost } from './core/post';
@@ -26,10 +29,100 @@ app.use(express.text());
 const router = express.Router();
 
 const GOLDEN_LEMON_SUPPORTER_SKU = 'golden-lemon-supporter';
+const DAILY_SPIN_ANCHOR_TEXT = `🍋 **Daily Lemon Spin submissions**
+
+Spin the free daily wheel in Lemonomics, then reply to this pinned comment with the lemon recipe or original lemon image it gives you.
+
+- Recipe prompts: include the ingredients and the key step.
+- Image prompts: use Reddit's image button and add a caption or image description.
+
+Only share content you made or have permission to post. Participation is optional and does not affect gameplay, rewards, or Reddit Gold.`;
+
+type DailySpinAnchor = {
+  id: `t1_${string}`;
+  url: string;
+};
 
 type PaymentOrder = {
   status: string;
   products: Array<{ sku: string }>;
+};
+
+const getUtcDate = (): string => new Date().toISOString().slice(0, 10);
+
+const getDailySpinChallenge = (id: string): DailySpinChallenge | undefined =>
+  DAILY_SPIN_CHALLENGES.find((challenge) => challenge.id === id);
+
+const getPostUrl = (postId: `t3_${string}`): string =>
+  `https://www.reddit.com/comments/${postId.slice(3)}`;
+
+const readDailySpinAnchor = async (
+  postId: `t3_${string}`
+): Promise<DailySpinAnchor | undefined> => {
+  const key = `daily-spin-anchor:${postId}`;
+  const stored = await redis.get(key);
+  if (!stored) return undefined;
+
+  try {
+    const anchor: unknown = JSON.parse(stored);
+    if (
+      !anchor ||
+      typeof anchor !== 'object' ||
+      typeof (anchor as Partial<DailySpinAnchor>).id !== 'string' ||
+      !(anchor as Partial<DailySpinAnchor>).id?.startsWith('t1_') ||
+      typeof (anchor as Partial<DailySpinAnchor>).url !== 'string' ||
+      !(anchor as Partial<DailySpinAnchor>).url?.startsWith('https://www.reddit.com/')
+    ) {
+      throw new Error('Daily spin anchor failed validation');
+    }
+
+    return anchor as DailySpinAnchor;
+  } catch (error) {
+    console.error('Invalid daily spin anchor:', error);
+    await redis.del(key);
+    return undefined;
+  }
+};
+
+const ensureDailySpinAnchor = async (postId: `t3_${string}`): Promise<string> => {
+  const existing = await readDailySpinAnchor(postId);
+  if (existing) return existing.url;
+
+  const lockKey = `daily-spin-anchor-lock:${postId}`;
+  const lock = await redis.set(lockKey, 'creating', {
+    nx: true,
+    expiration: new Date(Date.now() + 60_000),
+  });
+
+  if (!lock) {
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      const anchor = await readDailySpinAnchor(postId);
+      if (anchor) return anchor.url;
+    }
+
+    throw new Error('Timed out waiting for the daily spin comment thread');
+  }
+
+  const comment = await reddit.submitComment({
+    id: postId,
+    text: DAILY_SPIN_ANCHOR_TEXT,
+    runAs: 'APP',
+  });
+
+  try {
+    await comment.distinguish(true);
+  } catch (error) {
+    await comment.delete().catch(() => undefined);
+    throw error;
+  }
+
+  const anchor: DailySpinAnchor = {
+    id: comment.id,
+    url: `https://www.reddit.com${comment.permalink}`,
+  };
+  await redis.set(`daily-spin-anchor:${postId}`, JSON.stringify(anchor));
+  return anchor.url;
 };
 
 const isGamePhase = (value: unknown): value is Exclude<GamePhase, 'intro'> =>
@@ -135,6 +228,102 @@ router.get<object, SupporterStatusResponse>(
     res.json({ type: 'supporter-status', supporter });
   }
 );
+
+router.get<object, DailySpinResponse>('/api/daily-spin', async (_req, res): Promise<void> => {
+  const { userId, postId } = context;
+  const date = getUtcDate();
+
+  if (!userId) {
+    res.json({
+      type: 'daily-spin',
+      date,
+      signedIn: false,
+      spun: false,
+      message: 'Sign in to Reddit to take your daily spin.',
+    });
+    return;
+  }
+
+  const storedChallengeId = await redis.get(`daily-spin:${date}:${userId}`);
+  const challenge = storedChallengeId ? getDailySpinChallenge(storedChallengeId) : undefined;
+  const anchor = postId ? await readDailySpinAnchor(postId) : undefined;
+
+  const response: DailySpinResponse = {
+    type: 'daily-spin',
+    date,
+    signedIn: true,
+    spun: Boolean(challenge),
+  };
+  if (challenge) response.challenge = challenge;
+  if (anchor?.url) response.commentUrl = anchor.url;
+  else if (postId) response.commentUrl = getPostUrl(postId);
+  res.json(response);
+});
+
+router.post<object, DailySpinResponse>('/api/daily-spin', async (_req, res): Promise<void> => {
+  const { userId, postId } = context;
+  const date = getUtcDate();
+
+  if (!userId) {
+    res.status(401).json({
+      type: 'daily-spin',
+      date,
+      signedIn: false,
+      spun: false,
+      message: 'Sign in to Reddit to take your daily spin.',
+    });
+    return;
+  }
+
+  const spinKey = `daily-spin:${date}:${userId}`;
+  const storedChallengeId = await redis.get(spinKey);
+  let challenge = getDailySpinChallenge(storedChallengeId ?? '');
+
+  if (storedChallengeId && !challenge) {
+    await redis.del(spinKey);
+  }
+
+  if (!challenge) {
+    const candidate =
+      DAILY_SPIN_CHALLENGES[Math.floor(Math.random() * DAILY_SPIN_CHALLENGES.length)] ??
+      DAILY_SPIN_CHALLENGES[0];
+    await redis.set(spinKey, candidate.id, {
+      nx: true,
+      expiration: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000),
+    });
+    challenge = getDailySpinChallenge((await redis.get(spinKey)) ?? '');
+  }
+
+  if (!challenge) {
+    res.status(500).json({
+      type: 'daily-spin',
+      date,
+      signedIn: true,
+      spun: false,
+      message: 'The wheel did not settle. Please try again.',
+    });
+    return;
+  }
+
+  let commentUrl = postId ? getPostUrl(postId) : undefined;
+  if (postId) {
+    try {
+      commentUrl = await ensureDailySpinAnchor(postId);
+    } catch (error) {
+      console.error('Unable to prepare daily spin comment thread:', error);
+    }
+  }
+
+  const response: DailySpinResponse = {
+    type: 'daily-spin',
+    date,
+    signedIn: true,
+    spun: true,
+    challenge,
+  };
+  if (commentUrl) response.commentUrl = commentUrl;
+  res.json(response);
+});
 
 router.get<object, GameSaveResponse>('/api/game-save', async (_req, res): Promise<void> => {
   const { userId } = context;
