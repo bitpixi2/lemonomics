@@ -25,7 +25,7 @@ Original prompt: Take a look at https://www.reddit.com/r/lemonomics_game_dev/ de
 
 ## Remaining release work
 
-- Private playtest `v0.0.89.1` is installed in `r/lemonomics_game_dev`; production remains on `v0.0.87`.
+- Private playtest `v0.0.89.2` is installed in `r/lemonomics_game_dev`; production remains on `v0.0.87`.
 - Visually verify the sandbox Gold flow and save/resume through Reddit in the private playtest.
 - Push the Devvit dependency-alignment and GitHub Actions repair follow-up commit.
 - Submit the app version for Reddit review; update `r/Lemonomics` after approval if Reddit requires the developer-page Update button.
@@ -34,4 +34,4 @@ Original prompt: Take a look at https://www.reddit.com/r/lemonomics_game_dev/ de
 ## Release and CI notes
 
 - The first private upload was rejected because a stale npm-installed `@devvit/public-api@0.12.1` directory shadowed pnpm's 0.13.10 package graph. Declaring `@devvit/payments` and `@devvit/public-api` directly at 0.13.10 resolved all required package versions and the retry succeeded.
-- GitHub Actions failed before installing dependencies because the workflow hardcoded pnpm 8 while `package.json` declares pnpm 9.15.4. The workflow also called a nonexistent test script. It now uses the declared pnpm version, a frozen lockfile, and the verified type-check/lint/build sequence.
+- GitHub Actions failed before installing dependencies because the workflow hardcoded pnpm 8 while `package.json` declares pnpm 9.15.4. The workflow also called a nonexistent test script. The repaired run `31453435310` passed its frozen install, type-check, lint, and build; a follow-up updates the action runtimes to their current Node 24 releases to remove the deprecation warning.

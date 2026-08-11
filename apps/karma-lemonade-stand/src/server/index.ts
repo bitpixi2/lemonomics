@@ -28,6 +28,7 @@ const router = express.Router();
 const GOLDEN_LEMON_SUPPORTER_SKU = 'golden-lemon-supporter';
 
 type PaymentOrder = {
+  status: string;
   products: Array<{ sku: string }>;
 };
 
@@ -90,7 +91,10 @@ router.post<string, never, PaymentHandlerResponse, PaymentOrder>(
         return;
       }
 
-      if (!order.products.some((product) => product.sku === GOLDEN_LEMON_SUPPORTER_SKU)) {
+      if (
+        order.status !== 'PAID' ||
+        !order.products.some((product) => product.sku === GOLDEN_LEMON_SUPPORTER_SKU)
+      ) {
         res.json({ success: false, reason: 'The Golden Lemon purchase could not be verified.' });
         return;
       }
