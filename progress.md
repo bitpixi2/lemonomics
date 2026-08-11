@@ -31,6 +31,12 @@ Original prompt: Take a look at https://www.reddit.com/r/lemonomics_game_dev/ de
 - Submit the app version for Reddit review; update `r/Lemonomics` after approval if Reddit requires the developer-page Update button.
 - Complete the popular-Reddit-games comparison and prioritize the next iteration.
 
+## 2026-08-11 approved release continuation
+
+- The app owner approved the Terms of Use draft for publication. Publish it as `TERMS.md`, using the approved wording without the draft heading or approval note.
+- Add the public Terms URL to Reddit Developer Settings, then rerun the publish/review flow.
+- Do not implement an improvement direction yet. The owner is considering daily spin wheels and user-submitted lemon recipes or lemon-image content.
+
 ## Release and CI notes
 
 - The first private upload was rejected because a stale npm-installed `@devvit/public-api@0.12.1` directory shadowed pnpm's 0.13.10 package graph. Declaring `@devvit/payments` and `@devvit/public-api` directly at 0.13.10 resolved all required package versions and the retry succeeded.
