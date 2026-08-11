@@ -25,17 +25,25 @@ Original prompt: Take a look at https://www.reddit.com/r/lemonomics_game_dev/ de
 
 ## Remaining release work
 
-- Private playtest `v0.0.89.2` is installed in `r/lemonomics_game_dev`; production remains on `v0.0.87`.
-- Visually verify the sandbox Gold flow and save/resume through Reddit in the private playtest.
-- Push the Devvit dependency-alignment and GitHub Actions repair follow-up commit.
-- Submit the app version for Reddit review; update `r/Lemonomics` after approval if Reddit requires the developer-page Update button.
-- Complete the popular-Reddit-games comparison and prioritize the next iteration.
+- `v0.0.90` is installed in `r/lemonomics_game_dev`; production remains on `v0.0.87` while Reddit reviews the release.
+- After the Mac is unlocked, visually verify the sandbox Gold flow and save/resume through Reddit in the development installation.
+- After Reddit approves `v0.0.90`, update the `r/Lemonomics` production installation using the developer-page Update control if required.
+- Do not implement a new game direction until the owner chooses one.
 
 ## 2026-08-11 approved release continuation
 
 - The app owner approved the Terms of Use draft for publication. Publish it as `TERMS.md`, using the approved wording without the draft heading or approval note.
 - Add the public Terms URL to Reddit Developer Settings, then rerun the publish/review flow.
 - Do not implement an improvement direction yet. The owner is considering daily spin wheels and user-submitted lemon recipes or lemon-image content.
+
+## 2026-08-11 release submission
+
+- Published the approved Terms of Use at `https://github.com/bitpixi2/lemonomics/blob/main/TERMS.md` in commit `f32642d`.
+- Updated the Reddit app record so its Terms and Conditions field points to the public document and verified the saved value through the authenticated Devvit API.
+- `devvit publish --public --bump patch` uploaded the app and one-time source archive, completed Reddit's remote build, and successfully submitted `v0.0.90` for public review.
+- Installed the exact review build, `v0.0.90`, in `r/lemonomics_game_dev`. The production installation in `r/Lemonomics` remains `v0.0.87` pending approval.
+- GitHub Actions run `31454193007` passed install, type-check, lint, and build for commit `f32642d`.
+- The Mac remains locked, so live visual verification inside the Reddit sandbox is still outstanding. No real Gold purchase was attempted.
 
 ## Release and CI notes
 
