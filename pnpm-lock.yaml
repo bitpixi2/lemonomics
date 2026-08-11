@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@devvit/payments':
+        specifier: 0.13.10
+        version: 0.13.10(twirp-ts@2.5.0)
+      '@devvit/public-api':
+        specifier: 0.13.10
+        version: 0.13.10(twirp-ts@2.5.0)
       '@devvit/web':
         specifier: 0.13.10
         version: 0.13.10(twirp-ts@2.5.0)
@@ -63,6 +69,12 @@ importers:
 
   apps/karma-lemonade-stand:
     dependencies:
+      '@devvit/payments':
+        specifier: 0.13.10
+        version: 0.13.10(twirp-ts@2.5.0)
+      '@devvit/public-api':
+        specifier: 0.13.10
+        version: 0.13.10(twirp-ts@2.5.0)
       '@devvit/web':
         specifier: 0.13.10
         version: 0.13.10(twirp-ts@2.5.0)

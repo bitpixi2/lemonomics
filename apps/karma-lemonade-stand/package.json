@@ -26,6 +26,8 @@
     "type-check": "tsc --build"
   },
   "dependencies": {
+    "@devvit/payments": "0.13.10",
+    "@devvit/public-api": "0.13.10",
     "@devvit/web": "0.13.10",
     "clsx": "2.1.1",
     "devvit": "0.13.10",

@@ -19,6 +19,8 @@
     "login": "devvit login"
   },
   "dependencies": {
+    "@devvit/payments": "0.13.10",
+    "@devvit/public-api": "0.13.10",
     "@devvit/web": "0.13.10",
     "devvit": "0.13.10",
     "express": "5.1.0"
