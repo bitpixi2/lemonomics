@@ -10,12 +10,12 @@ Original prompt: Take a look at https://www.reddit.com/r/lemonomics_game_dev/ de
 
 ## Current task
 
-- Publish a verified private build to the development subreddit, push the source, and then submit the production release.
+- Keep the source, CI runtime, private development build, and live installation inventory current while production changes remain explicitly gated.
 - Audit the game against current successful Reddit-game patterns and propose the next few product directions.
 
 ## Implemented and verified
 
-- Upgraded the app to Devvit Web 0.13.10 and removed the obsolete custom-post splash payload.
+- Upgraded the app to Devvit Web 0.14.0 and removed the obsolete custom-post splash payload.
 - Added Redis-backed save/resume, including validated stored state and reset cleanup.
 - Added a 5 Reddit Gold durable `Golden Lemon Supporter` product with fulfillment, refund handling, a cosmetic badge, and a golden theme. The full game remains free.
 - Added deterministic `render_game_to_text` and `advanceTime` hooks plus stable interaction test IDs.
@@ -25,9 +25,9 @@ Original prompt: Take a look at https://www.reddit.com/r/lemonomics_game_dev/ de
 
 ## Remaining release work
 
-- `v0.0.91` is installed in `r/lemonomics_game_dev`; production remains on `v0.0.87` while Reddit reviews the revised release.
-- After the Mac is unlocked, visually verify the sandbox Gold flow and save/resume through Reddit in the development installation.
-- After Reddit approves `v0.0.91`, update the `r/Lemonomics` production installation using the developer-page Update control if required.
+- Devvit 0.14 prerelease `v0.0.91.1` is installed in `r/lemonomics_game_dev`; the live production inventory is `v0.0.91` in `r/Lemonomics`.
+- After the Mac is unlocked, visually verify the sandbox Gold flow, save/resume, and server-backed Daily Spin through the development installation.
+- Do not publish or update production to the 0.14 build until the owner explicitly requests that promotion.
 
 ## 2026-08-11 approved release continuation
 
@@ -75,4 +75,6 @@ Original prompt: Take a look at https://www.reddit.com/r/lemonomics_game_dev/ de
 - Removed Kiro's stale PATH override to the original machine's Node 22 installation so its MCP configuration inherits the active environment.
 - Under exact Node `24.18.0`, frozen install, Devvit dependency sync, type-check, lint, and client/server production builds pass.
 - The standard web-game client and Playwright CLI verified the Daily Spin flow, a complete profitable Day 1 through Day 2, deterministic game state, desktop/mobile layout, no horizontal overflow, and no browser console errors.
-- Private Devvit upload and development-subreddit installation are the remaining release steps; production stays on `v0.0.87` and public review `v0.0.91` is not being disturbed.
+- Pushed commit `aedcb7b` to `bitpixi2/lemonomics`; GitHub Actions run `31496972112` passed frozen install, type-check, lint, and production build under Node `24.18.0`.
+- Uploaded successfully built private prerelease `v0.0.91.1`, verified its `publicApiVersion` is `0.14.0`, and installed that exact version in `r/lemonomics_game_dev`.
+- Before and after the private development install, the live production inventory showed `r/Lemonomics` on `v0.0.91`. No publish, review withdrawal, or production install was performed for the 0.14 build.
