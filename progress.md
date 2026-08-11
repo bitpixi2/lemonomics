@@ -25,10 +25,9 @@ Original prompt: Take a look at https://www.reddit.com/r/lemonomics_game_dev/ de
 
 ## Remaining release work
 
-- `v0.0.90` is installed in `r/lemonomics_game_dev`; production remains on `v0.0.87` while Reddit reviews the release.
+- `v0.0.91` is installed in `r/lemonomics_game_dev`; production remains on `v0.0.87` while Reddit reviews the revised release.
 - After the Mac is unlocked, visually verify the sandbox Gold flow and save/resume through Reddit in the development installation.
-- After Reddit approves `v0.0.90`, update the `r/Lemonomics` production installation using the developer-page Update control if required.
-- Do not implement a new game direction until the owner chooses one.
+- After Reddit approves `v0.0.91`, update the `r/Lemonomics` production installation using the developer-page Update control if required.
 
 ## 2026-08-11 approved release continuation
 
@@ -59,4 +58,12 @@ Original prompt: Take a look at https://www.reddit.com/r/lemonomics_game_dev/ de
 - The first spin on each game post creates one distinguished, sticky app comment. Players use an explicit button to open that thread and write their own reply or attach an image through Reddit's native composer; the app never posts as the player and comments do not affect gameplay, rewards, or Gold.
 - Added copyable, fill-in comment starters, content-ownership reminders, signed-out handling, retry/fallback behavior, a responsive wheel modal, Escape/backdrop closing, and daily-spin state in `render_game_to_text`.
 - Local TypeScript, ESLint, client/server builds, desktop gameplay regression, desktop and 390 px wheel interactions, clipboard behavior, machine-readable state, overflow, and console checks pass. The web-game standard Playwright client and Playwright CLI screenshots were visually inspected.
-- Live Devvit upload, development-subreddit installation, and revised public review submission are still pending this final review pass. No Gold purchase has been attempted.
+- The revised Devvit build is uploaded, installed in the development subreddit, and submitted for public review. No Gold purchase has been attempted.
+
+## 2026-08-11 Daily Lemon Spin release submission
+
+- Pushed commit `e31f42c` to `bitpixi2/lemonomics`; GitHub Actions run `31457050086` passed frozen install, type-check, lint, and production build.
+- Uploaded private prerelease `v0.0.90.1` with the 5 Gold product catalog and installed it in `r/lemonomics_game_dev` before changing the public review request.
+- Withdrew the superseded `v0.0.90` review request, uploaded the source archive, completed Reddit's remote build, and successfully submitted `v0.0.91` for public review.
+- Installed the exact review build, `v0.0.91`, in `r/lemonomics_game_dev` and verified that production `r/Lemonomics` remains on `v0.0.87`.
+- Reddit's payment-verification check reports success. Real Gold checkout still requires the product/app approval path; no real Gold purchase was attempted.
