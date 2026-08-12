@@ -1,1 +1,48 @@
 @import 'tailwindcss';
+
+@keyframes daily-spin-wheel-idle {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes daily-spin-confetti-fall {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -24px, 0) rotate(0deg);
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--confetti-x), 330px, 0) rotate(var(--confetti-rotation));
+  }
+}
+
+.daily-spin-wheel-idle {
+  animation: daily-spin-wheel-idle 2.4s linear infinite;
+  will-change: transform;
+}
+
+.daily-spin-confetti-piece {
+  position: absolute;
+  top: 24%;
+  width: 0.55rem;
+  height: 0.9rem;
+  border-radius: 0.15rem;
+  opacity: 0;
+  animation-name: daily-spin-confetti-fall;
+  animation-timing-function: cubic-bezier(0.12, 0.7, 0.25, 1);
+  animation-fill-mode: forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .daily-spin-wheel-idle,
+  .daily-spin-confetti-piece {
+    animation: none;
+  }
+}

@@ -10,6 +10,7 @@ import type {
   IncrementResponse,
   InitResponse,
   SavedGame,
+  SupporterResetResponse,
   SupporterStatusResponse,
 } from '../shared/types/api';
 import { DAILY_SPIN_CHALLENGES } from '../shared/types/api';
@@ -29,6 +30,9 @@ app.use(express.text());
 const router = express.Router();
 
 const GOLDEN_LEMON_SUPPORTER_SKU = 'golden-lemon-supporter';
+const SUPPORTER_TEST_RESET_USER_ID = 't2_jdl8h';
+const SUPPORTER_TEST_SUBREDDIT = 'lemonomics_game_dev';
+const SUPPORTER_TEST_RESET_ID = 'bitpixi-2026-08-12';
 const DAILY_SPIN_ANCHOR_TEXT = `🍋 **Daily Lemon Spin submissions**
 
 Spin the free daily wheel in Lemonomics, then reply to this pinned comment with the lemon recipe or original lemon image it gives you.
@@ -46,6 +50,21 @@ type DailySpinAnchor = {
 type PaymentOrder = {
   status: string;
   products: Array<{ sku: string }>;
+};
+
+const canResetTestSupporter = (): boolean =>
+  context.userId === SUPPORTER_TEST_RESET_USER_ID &&
+  context.subredditName.toLowerCase() === SUPPORTER_TEST_SUBREDDIT;
+
+const applyPendingSupporterTestReset = async (): Promise<void> => {
+  const { userId } = context;
+  if (!userId || !canResetTestSupporter()) return;
+
+  const resetMarkerKey = `supporter-test-reset:${SUPPORTER_TEST_RESET_ID}:${userId}`;
+  if (await redis.get(resetMarkerKey)) return;
+
+  await redis.del(`supporter:${userId}`);
+  await redis.set(resetMarkerKey, new Date().toISOString());
 };
 
 const getUtcDate = (): string => new Date().toISOString().slice(0, 10);
@@ -224,8 +243,39 @@ router.get<object, SupporterStatusResponse>(
   '/api/supporter-status',
   async (_req, res): Promise<void> => {
     const { userId } = context;
-    const supporter = userId ? (await redis.get(`supporter:${userId}`)) === 'true' : false;
-    res.json({ type: 'supporter-status', supporter });
+    await applyPendingSupporterTestReset();
+    const supporter = userId ? Boolean(await redis.get(`supporter:${userId}`)) : false;
+    res.json({
+      type: 'supporter-status',
+      supporter,
+      canResetTestSupporter: canResetTestSupporter(),
+    });
+  }
+);
+
+router.delete<object, SupporterResetResponse | { message: string }>(
+  '/api/supporter-status',
+  async (_req, res): Promise<void> => {
+    const { userId } = context;
+
+    if (!userId || !canResetTestSupporter()) {
+      res
+        .status(403)
+        .json({ message: 'This test reset is only available to bitpixi in the dev subreddit.' });
+      return;
+    }
+
+    const supporterKey = `supporter:${userId}`;
+    const reset = Boolean(await redis.get(supporterKey));
+    await redis.del(supporterKey);
+    res.json({
+      type: 'supporter-reset',
+      supporter: false,
+      reset,
+      message: reset
+        ? 'Your dev supporter test state was reset. No Reddit Gold was charged.'
+        : 'Your dev supporter test state was already clear. No Reddit Gold was charged.',
+    });
   }
 );
 

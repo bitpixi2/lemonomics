@@ -88,6 +88,14 @@ export type GameSaveResponse =
 export type SupporterStatusResponse = {
   type: 'supporter-status';
   supporter: boolean;
+  canResetTestSupporter: boolean;
+};
+
+export type SupporterResetResponse = {
+  type: 'supporter-reset';
+  supporter: false;
+  reset: boolean;
+  message: string;
 };
 
 export type DailySpinCategory = 'recipe' | 'image';

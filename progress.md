@@ -78,3 +78,14 @@ Original prompt: Take a look at https://www.reddit.com/r/lemonomics_game_dev/ de
 - Pushed commit `aedcb7b` to `bitpixi2/lemonomics`; GitHub Actions run `31496972112` passed frozen install, type-check, lint, and production build under Node `24.18.0`.
 - Uploaded successfully built private prerelease `v0.0.91.1`, verified its `publicApiVersion` is `0.14.0`, and installed that exact version in `r/lemonomics_game_dev`.
 - Before and after the private development install, the live production inventory showed `r/Lemonomics` on `v0.0.91`. No publish, review withdrawal, or production install was performed for the 0.14 build.
+
+## 2026-08-12 spinning wheel, confetti, and supporter reset
+
+- Changed the unopened Daily Lemon Spin to rotate continuously. Pressing the central Stop button keeps the wheel moving while Reddit resolves the server result, then decelerates it to the verified challenge before showing a short confetti celebration.
+- Added a reduced-motion path that uses a static Reveal button, skips the wheel transition and confetti, and retains the same server-backed daily result.
+- Removed the optimistic supporter activation after checkout. The Golden Lemon badge now appears only after `/api/supporter-status` confirms that Reddit called the paid-order fulfillment handler; delayed fulfillment is polled and reported honestly.
+- Added an owner-only development reset protected by both bitpixi's Reddit user ID and `r/lemonomics_game_dev`. A one-time migration deleted only `supporter:t2_jdl8h`, and the permanent reset button remains available for future sandbox tests.
+- Verified the live dev post now shows `Support with 5 Reddit Gold` with no active supporter badge. No Gold purchase was attempted and no production data was changed.
+- TypeScript, ESLint, client/server production builds, desktop and 390 px game-state checks, wheel motion, settling, result focus, confetti lifecycle, reduced motion, layout overflow, and browser console checks pass under Node `24.18.0`.
+- Uploaded and installed private Devvit 0.14 playtest `v0.0.91.3` in `r/lemonomics_game_dev`. Production `r/Lemonomics` remains on `v0.0.91`.
+- Reddit Developer Settings reports the owner account is payment verified. The App Versions page reports production review `v0.0.91` as `Private · In Review` on Public API `0.13.10`, while `v0.0.91.3` is `Private · Playtest` on Public API `0.14.0`; real Gold remains gated on Reddit's review approval.

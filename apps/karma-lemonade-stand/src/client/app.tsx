@@ -11,6 +11,23 @@ import type {
 import { DAILY_SPIN_CHALLENGES } from '../shared/types/api';
 import { useSupportPurchase } from './hooks/useSupportPurchase';
 
+const SPIN_SETTLE_MILLISECONDS = 1650;
+const CONFETTI_COLORS = ['#facc15', '#fb923c', '#10b981', '#38bdf8', '#f472b6'];
+const CONFETTI_PIECES = Array.from({ length: 28 }, (_, index) => ({
+  id: index,
+  color: CONFETTI_COLORS[index % CONFETTI_COLORS.length],
+  left: 8 + ((index * 37) % 84),
+  delay: (index % 7) * 45,
+  duration: 900 + (index % 5) * 90,
+  drift: -110 + ((index * 53) % 220),
+  rotation: 240 + ((index * 83) % 420),
+}));
+
+const waitForNextPaint = () =>
+  new Promise<void>((resolve) => {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()));
+  });
+
 interface KarmaBoost {
   multiplier: number;
   level: string;
@@ -69,7 +86,9 @@ export const App: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const dailySpinDialogRef = useRef<HTMLElement | null>(null);
   const dailySpinTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const dailySpinWheelRef = useRef<HTMLDivElement | null>(null);
   const wasDailySpinOpenRef = useRef(false);
+  const confettiTimeoutRef = useRef<number | null>(null);
 
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [savedGame, setSavedGame] = useState<SavedGame | null>(null);
@@ -78,15 +97,45 @@ export const App: React.FC = () => {
   const [isDailySpinOpen, setIsDailySpinOpen] = useState(false);
   const [isLoadingDailySpin, setIsLoadingDailySpin] = useState(true);
   const [isSpinning, setIsSpinning] = useState(false);
+  const [isWheelSettling, setIsWheelSettling] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
+  const [showSpinConfetti, setShowSpinConfetti] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [dailySpinMessage, setDailySpinMessage] = useState('');
   const {
     supporter,
     loading: supporterLoading,
     purchasing,
+    resetting,
+    canResetTestSupporter,
     message,
     supportApp,
+    resetTestSupporter,
   } = useSupportPurchase();
+  const isWheelIdling =
+    isDailySpinOpen &&
+    !prefersReducedMotion &&
+    !dailySpin?.challenge &&
+    !isLoadingDailySpin &&
+    !isWheelSettling &&
+    dailySpin?.signedIn !== false;
+
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const updatePreference = () => setPrefersReducedMotion(query.matches);
+    updatePreference();
+    query.addEventListener('change', updatePreference);
+    return () => query.removeEventListener('change', updatePreference);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (confettiTimeoutRef.current !== null) {
+        window.clearTimeout(confettiTimeoutRef.current);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     if (import.meta.env.DEV) {
@@ -281,11 +330,15 @@ export const App: React.FC = () => {
         dayResult,
         karmaBoost,
         supporter,
+        canResetTestSupporter,
         savedRunAvailable: savedGame !== null,
         dailySpin: {
           open: isDailySpinOpen,
           loading: isLoadingDailySpin,
           spinning: isSpinning,
+          idleSpinning: isWheelIdling,
+          settling: isWheelSettling,
+          celebrating: showSpinConfetti,
           spun: dailySpin?.spun ?? false,
           challenge: dailySpin?.challenge ?? null,
         },
@@ -298,15 +351,19 @@ export const App: React.FC = () => {
     };
   }, [
     dailySpin,
+    canResetTestSupporter,
     dayResult,
     gameState,
     inputs,
     isDailySpinOpen,
     isLoadingDailySpin,
     isSpinning,
+    isWheelIdling,
+    isWheelSettling,
     karmaBoost,
     phase,
     savedGame,
+    showSpinConfetti,
     supporter,
   ]);
 
@@ -423,6 +480,7 @@ export const App: React.FC = () => {
 
     setIsSpinning(true);
     setDailySpinMessage('');
+    setShowSpinConfetti(false);
 
     try {
       let result: DailySpinResponse;
@@ -456,14 +514,40 @@ export const App: React.FC = () => {
       );
       if (challengeIndex < 0) throw new Error('The wheel returned an unknown challenge.');
 
-      setWheelRotation((current) => {
-        const normalized = ((current % 360) + 360) % 360;
-        const target = (((-challengeIndex * 90) % 360) + 360) % 360;
-        return current + 1440 + target - normalized;
-      });
+      let currentRotation = wheelRotation;
+      const transform = dailySpinWheelRef.current
+        ? window.getComputedStyle(dailySpinWheelRef.current).transform
+        : 'none';
+      if (transform !== 'none') {
+        const matrix = new DOMMatrixReadOnly(transform);
+        const renderedRotation = (Math.atan2(matrix.b, matrix.a) * 180) / Math.PI;
+        if (Number.isFinite(renderedRotation)) currentRotation = renderedRotation;
+      }
 
-      await new Promise((resolve) => setTimeout(resolve, 900));
+      setIsWheelSettling(true);
+      setWheelRotation(currentRotation);
+      await waitForNextPaint();
+
+      const normalized = ((currentRotation % 360) + 360) % 360;
+      const target = (((-challengeIndex * 90) % 360) + 360) % 360;
+      const targetOffset = (target - normalized + 360) % 360;
+      setWheelRotation(currentRotation + 1080 + targetOffset);
+
+      if (!prefersReducedMotion) {
+        await new Promise((resolve) => setTimeout(resolve, SPIN_SETTLE_MILLISECONDS));
+      }
       setDailySpin(result);
+      setIsWheelSettling(false);
+      if (!prefersReducedMotion) {
+        setShowSpinConfetti(true);
+        if (confettiTimeoutRef.current !== null) {
+          window.clearTimeout(confettiTimeoutRef.current);
+        }
+        confettiTimeoutRef.current = window.setTimeout(() => {
+          setShowSpinConfetti(false);
+          confettiTimeoutRef.current = null;
+        }, 1500);
+      }
       window.requestAnimationFrame(() => {
         dailySpinDialogRef.current
           ?.querySelector<HTMLElement>('[data-testid="daily-spin-result"]')
@@ -472,6 +556,7 @@ export const App: React.FC = () => {
     } catch (error) {
       setDailySpinMessage(error instanceof Error ? error.message : 'Unable to spin right now.');
     } finally {
+      setIsWheelSettling(false);
       setIsSpinning(false);
     }
   };
@@ -846,8 +931,32 @@ export const App: React.FC = () => {
           role="dialog"
           aria-modal="true"
           aria-labelledby="daily-spin-title"
-          className="max-h-[calc(100vh-1.5rem)] w-full max-w-sm overflow-y-auto rounded-2xl border-4 border-yellow-400 bg-white p-5 text-center shadow-2xl"
+          className="relative max-h-[calc(100vh-1.5rem)] w-full max-w-sm overflow-y-auto rounded-2xl border-4 border-yellow-400 bg-white p-5 text-center shadow-2xl"
         >
+          {showSpinConfetti && (
+            <div
+              data-testid="daily-spin-confetti"
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 z-30 overflow-hidden rounded-xl"
+            >
+              {CONFETTI_PIECES.map((piece) => (
+                <span
+                  key={piece.id}
+                  className="daily-spin-confetti-piece"
+                  style={
+                    {
+                      left: `${piece.left}%`,
+                      backgroundColor: piece.color,
+                      animationDelay: `${piece.delay}ms`,
+                      animationDuration: `${piece.duration}ms`,
+                      '--confetti-x': `${piece.drift}px`,
+                      '--confetti-rotation': `${piece.rotation}deg`,
+                    } as React.CSSProperties
+                  }
+                />
+              ))}
+            </div>
+          )}
           <div className="flex items-start justify-between gap-3 text-left">
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-emerald-700">
@@ -876,15 +985,18 @@ export const App: React.FC = () => {
               ▼
             </div>
             <div
+              ref={dailySpinWheelRef}
+              data-testid="daily-spin-wheel"
               aria-label="Recipe and lemon image challenge wheel"
-              className="absolute inset-0 rounded-full border-8 border-yellow-500 shadow-lg"
+              className={`absolute inset-0 rounded-full border-8 border-yellow-500 shadow-lg ${isWheelIdling ? 'daily-spin-wheel-idle' : ''}`}
               style={{
                 background:
                   'conic-gradient(from -45deg, #fde047 0deg 90deg, #a7f3d0 90deg 180deg, #bfdbfe 180deg 270deg, #fecdd3 270deg 360deg)',
                 transform: `rotate(${wheelRotation}deg)`,
-                transition: isSpinning
-                  ? 'transform 850ms cubic-bezier(0.12, 0.7, 0.18, 1)'
-                  : 'none',
+                transition:
+                  isWheelSettling && !prefersReducedMotion
+                    ? `transform ${SPIN_SETTLE_MILLISECONDS}ms cubic-bezier(0.12, 0.7, 0.18, 1)`
+                    : 'none',
               }}
             >
               {DAILY_SPIN_CHALLENGES.map((item, index) => (
@@ -906,7 +1018,13 @@ export const App: React.FC = () => {
                   onClick={() => void spinDaily()}
                   className="pointer-events-auto flex h-20 w-20 items-center justify-center rounded-full border-4 border-white bg-emerald-600 text-sm font-black uppercase text-white shadow-xl hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-gray-400"
                 >
-                  {isLoadingDailySpin ? 'Loading' : isSpinning ? 'Spinning' : 'Spin'}
+                  {isLoadingDailySpin
+                    ? 'Loading'
+                    : isSpinning
+                      ? 'Stopping'
+                      : prefersReducedMotion
+                        ? 'Reveal'
+                        : 'Stop'}
                 </button>
               ) : (
                 <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white bg-emerald-600 text-4xl shadow-xl">
@@ -915,6 +1033,14 @@ export const App: React.FC = () => {
               )}
             </div>
           </div>
+
+          {!challenge && !isLoadingDailySpin && dailySpin?.signedIn !== false && (
+            <p className="mt-3 text-sm font-semibold text-emerald-800">
+              {prefersReducedMotion
+                ? 'Press Reveal to receive today’s community prompt.'
+                : 'The wheel is spinning — press Stop to reveal today’s prompt.'}
+            </p>
+          )}
 
           {!challenge && (
             <div className="mt-4 grid grid-cols-2 gap-2 text-left text-xs text-gray-700">
@@ -1144,9 +1270,22 @@ export const App: React.FC = () => {
                 stand theme; the full game stays free.
               </p>
               {supporter ? (
-                <p className="mt-3 text-center text-sm font-bold text-amber-900">
-                  Golden Lemon Supporter active — thank you!
-                </p>
+                <div className="mt-3 text-center">
+                  <p className="text-sm font-bold text-amber-900">
+                    Golden Lemon Supporter active — thank you!
+                  </p>
+                  {canResetTestSupporter && (
+                    <button
+                      data-testid="reset-test-supporter"
+                      type="button"
+                      onClick={() => void resetTestSupporter()}
+                      disabled={resetting}
+                      className="mt-2 rounded-lg border border-amber-700 bg-white px-3 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100 disabled:opacity-60"
+                    >
+                      {resetting ? 'Resetting…' : 'Reset my dev test badge'}
+                    </button>
+                  )}
+                </div>
               ) : (
                 <button
                   data-testid="support-game"
